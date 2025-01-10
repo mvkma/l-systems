@@ -14,11 +14,6 @@ let productions = null;
 let state = null;
 
 /**
- * @type {Object}
- */
-let turtle = null;
-
-/**
  * Matrix vector multiplication
  *
  * @param {Object} M
@@ -33,17 +28,43 @@ function mulMatVec(M, v) {
     ];
 }
 
-function draw() {
-    let stack = [];
+/**
+ * 2D rotation matrix
+ *
+ * @param {number} angle - angle in radians
+ *
+ * @return {Object}
+ */
+function rotationMatrix(angle) {
+    return [
+        [Math.cos(angle), Math.sin(angle)],
+        [-Math.sin(angle), Math.cos(angle)],
+    ];
+}
+    
+
+/**
+ * @param {Object} initialTurtle
+ */
+function draw(initialTurtle) {
+    const stack = [];
+    let turtle = structuredClone(initialTurtle);
+
+    turtle["rotPos"] = rotationMatrix(turtle["angle"]);
+    turtle["rotNeg"] = rotationMatrix(-turtle["angle"]);
+
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.lineWidth = 1.0;
     ctx.strokeStyle = "lightblue";
-    // console.log(turtle["position"], turtle["heading"]);
 
     ctx.beginPath();
     ctx.moveTo(...turtle["position"]);
     for (const c of state) {
         switch (c) {
+        case "f":
+            turtle["position"] = turtle["position"].map((v, i) => v + turtle["step"] * turtle["heading"][i]);
+            ctx.moveTo(...turtle["position"]);
+            break;
         case "F":
             turtle["position"] = turtle["position"].map((v, i) => v + turtle["step"] * turtle["heading"][i]);
             ctx.lineTo(...turtle["position"]);
@@ -54,17 +75,21 @@ function draw() {
         case "-":
             turtle["heading"] = mulMatVec(turtle["rotNeg"], turtle["heading"]);
             break;
+        case "[":
+            stack.push(structuredClone(turtle));
+            break;
+        case "]":
+            turtle = stack.pop();
+            ctx.moveTo(...turtle["position"]);
+            break;
         default:
             break;
         }
-        // console.log(c, turtle["position"], turtle["heading"]);
     }
     ctx.stroke();
 }
 
 function evolve() {
-    // console.log(productions);
-    // console.log(state);
     let replacement = undefined;
     let next = "";
     for (const c of state) {
@@ -74,39 +99,51 @@ function evolve() {
         }
         next = next + replacement;
     }
-    // console.log(next);
     state = next;
 }
 
 window.onload = function(ev) {
     ctx = document.querySelector("canvas").getContext("2d");
 
-    state = "F-F-F-F";
+    // state = "F-F-F-F";
+    // state = "-F";
+    // state = "F+F+F+F";
+    // state = "F-F-F-F";
+    // state = "F";
+    state = "X";
 
     productions = {
-        "F": "F-F+F+FF-F-F+F",
+        // "F": "F-F+F+FF-F-F+F",
+        // "F": "F+F-F-F+F",
+        // "F": "F+f-FF+F+FF+Ff+FF-f+FF-F-FF-Ff-FFF",
+        // "f": "ffffff",
+        // "F": "F-FF--F-F",
+        // "F": "F[+F]F[-F]F",
+        "F": "FF",
+        "X": "F[+X][-X]FX",
+        "[": "[",
+        "]": "]",
         "+": "+",
         "-": "-",
     };
 
     const angle = Math.PI / 2;
-
-    turtle = {
+    const turtle = {
         step: 20,
-        heading: [0.0, 1.0],
-        position: [ctx.canvas.width / 2, ctx.canvas.height / 2],
-        rotPos: [[Math.cos(angle),  Math.sin(angle)], [-Math.sin(angle), Math.cos(angle)]],
-        rotNeg: [[Math.cos(angle), -Math.sin(angle)], [ Math.sin(angle), Math.cos(angle)]],
+        heading: [0.0, -1.0],
+        position: [ctx.canvas.width / 2, ctx.canvas.height / 1],
+        angle: Math.PI / 180 * 25.7,
     };
 
-    draw();
+    draw(turtle);
 
     window.addEventListener("keydown", function(ev) {
         switch (ev.key) {
         case " ":
             evolve();
-            turtle["step"] /= 2.0;
-            draw();
+            turtle["step"] /= 1.5;
+            // console.log(state);
+            draw(turtle);
             ev.preventDefault();
             break;
         default:
