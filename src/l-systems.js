@@ -45,8 +45,9 @@ function rotationMatrix(angle) {
 
 /**
  * @param {Object} initialTurtle
+ * @param {boolean} animate
  */
-function draw(initialTurtle) {
+function draw(initialTurtle, animate = false, interval = 20) {
     const stack = [];
     let turtle = structuredClone(initialTurtle);
 
@@ -59,7 +60,8 @@ function draw(initialTurtle) {
 
     ctx.beginPath();
     ctx.moveTo(...turtle["position"]);
-    for (const c of state) {
+
+    const drawingStep = function (c) {
         switch (c) {
         case "f":
             turtle["position"] = turtle["position"].map((v, i) => v + turtle["step"] * turtle["heading"][i]);
@@ -86,7 +88,27 @@ function draw(initialTurtle) {
             break;
         }
     }
-    ctx.stroke();
+
+    if (animate) {
+        let i = 0;
+        const timer = window.setInterval(function () {
+            if (i == state.length) {
+                window.clearInterval(timer);
+                console.log("done");
+            }
+            //console.log(i, state[i]);
+            ctx.beginPath();
+            ctx.moveTo(...turtle["position"]);
+            drawingStep(state[i]);
+            ctx.stroke();
+            i++;
+        }, interval);
+    } else {
+        for (const c of state) {
+            drawingStep(c);
+        }
+        ctx.stroke();
+    }
 }
 
 function evolve() {
@@ -132,7 +154,7 @@ window.onload = function(ev) {
         step: 20,
         heading: [0.0, -1.0],
         position: [ctx.canvas.width / 2, ctx.canvas.height / 1],
-        angle: Math.PI / 180 * 25.7,
+        angle: Math.PI / 180 * 25,
     };
 
     draw(turtle);
@@ -142,8 +164,7 @@ window.onload = function(ev) {
         case " ":
             evolve();
             turtle["step"] /= 1.5;
-            // console.log(state);
-            draw(turtle);
+            draw(turtle, ev.shiftKey, 2);
             ev.preventDefault();
             break;
         default:
