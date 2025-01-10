@@ -1,0 +1,93 @@
+.text-right {
+    float: right;
+}
+
+.column-group-container {
+    display: flex;
+    width: 800px;
+}
+
+.column-group {
+    font-size: 0.9em;
+    margin: 0.5em;
+    padding: 0.3em 0.5em;
+    width: min-content;
+    border: 1px solid var(--src-fg-color);
+    flex: 1;
+}
+
+.column-group:first-child {
+    margin-left: 0em;
+}
+
+.column-group:last-child {
+    margin-right: 0em;
+}
+
+.row {
+    text-align: center;
+}
+
+.param-row > label {
+    display: inline-block;
+}
+
+.param-row > input, .param-row > select {
+    float: right;
+}
+
+.button-row {
+    display: flex;
+}
+
+.button-row > button {
+    margin: 0em 0.2em;
+}
+
+input[type=""], select {
+    text-align: right;
+    width: 120px;
+    background: var(--src-bg-color);
+    color: var(--src-fg-color);
+}
+
+input[type=""]:focus {
+    border: 1px solid var(--text-color);
+}
+
+input[type="color"] {
+    width: 60px;
+    height: 1em;
+}
+
+button {
+    width: 100%;
+    padding: 0.1em;
+    margin: 0em;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: max-content auto;
+}
+
+dt {
+    grid-column-start: 1;
+}
+
+dd:before {
+    content: "-";
+    margin-right: 1em;
+}
+
+dd {
+    margin-left: 1em;
+    grid-column-start: 2;
+}
+
+canvas {
+    touch-action: none;
+    width: 800px;
+    height: 600px;
+}
+

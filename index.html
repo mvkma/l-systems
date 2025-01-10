@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="assets/css/main.css"/>
+    <link rel="stylesheet" type="text/css" href="assets/css/mandelbrot.css"/>
+    <title>L-Systems</title>
+    <meta name="description" content="Mandelbrot" />
+  </head>
+  <body>
+    <div class="column-group-container">
+      <div class="column-group">
+        <span class="text-left">l-systems</span>
+      </div>
+    </div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div class="column-group-container">
+      <div class="column-group" id="simulation-rules"></div>
+      <div class="column-group" id="view-controls"></div>
+    </div>
+    <script type="module" src="src/l-systems.js"></script>
+  </body>
+</html>
