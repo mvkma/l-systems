@@ -22,6 +22,7 @@ let state = null;
  * @return {Object}
  */
 function mulMatVec(M, v) {
+
     return [
         v[0] * M[0][0] + v[1] * M[0][1],
         v[0] * M[1][0] + v[1] * M[1][1],
@@ -49,40 +50,51 @@ function rotationMatrix(angle) {
  */
 function draw(initialTurtle, animate = false, interval = 20) {
     const stack = [];
-    let turtle = structuredClone(initialTurtle);
+    let turtle = new Float32Array([...initialTurtle["position"], ...initialTurtle["heading"]]);
+    const step = initialTurtle["step"];
 
-    turtle["rotPos"] = rotationMatrix(turtle["angle"]);
-    turtle["rotNeg"] = rotationMatrix(-turtle["angle"]);
+    const rotPos = rotationMatrix(initialTurtle["angle"]);
+    const rotNeg = rotationMatrix(-initialTurtle["angle"]);
+
+    let cur;
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.lineWidth = 1.0;
     ctx.strokeStyle = "lightblue";
 
     ctx.beginPath();
-    ctx.moveTo(...turtle["position"]);
+    ctx.moveTo(...turtle);
 
     const drawingStep = function (c) {
         switch (c) {
         case "f":
-            turtle["position"] = turtle["position"].map((v, i) => v + turtle["step"] * turtle["heading"][i]);
-            ctx.moveTo(...turtle["position"]);
+            // turtle["position"] = turtle["position"].map((v, i) => v + turtle["step"] * turtle["heading"][i]);
+            turtle[0] = turtle[0] + step * turtle[2];
+            turtle[1] = turtle[1] + step * turtle[3];
+            ctx.moveTo(...turtle);
             break;
         case "F":
-            turtle["position"] = turtle["position"].map((v, i) => v + turtle["step"] * turtle["heading"][i]);
-            ctx.lineTo(...turtle["position"]);
+            // turtle["position"] = turtle["position"].map((v, i) => v + turtle["step"] * turtle["heading"][i]);
+            turtle[0] = turtle[0] + step * turtle[2];
+            turtle[1] = turtle[1] + step * turtle[3];
+            ctx.lineTo(...turtle);
             break;
         case "+":
-            turtle["heading"] = mulMatVec(turtle["rotPos"], turtle["heading"]);
+            cur = turtle.slice(2, 4);
+            turtle[2] = cur[0] * rotPos[0][0] + cur[1] * rotPos[0][1];
+            turtle[3] = cur[0] * rotPos[1][0] + cur[1] * rotPos[1][1];
             break;
         case "-":
-            turtle["heading"] = mulMatVec(turtle["rotNeg"], turtle["heading"]);
+            cur = turtle.slice(2, 4);
+            turtle[2] = cur[0] * rotNeg[0][0] + cur[1] * rotNeg[0][1];
+            turtle[3] = cur[0] * rotNeg[1][0] + cur[1] * rotNeg[1][1];
             break;
         case "[":
-            stack.push(structuredClone(turtle));
+            stack.push(turtle.slice());
             break;
         case "]":
             turtle = stack.pop();
-            ctx.moveTo(...turtle["position"]);
+            ctx.moveTo(...turtle);
             break;
         default:
             break;
@@ -165,6 +177,7 @@ window.onload = function(ev) {
             evolve();
             turtle["step"] /= 1.5;
             draw(turtle, ev.shiftKey, 2);
+            console.log(state.length);
             ev.preventDefault();
             break;
         default:
