@@ -14,6 +14,11 @@ let productions = null;
 let state = null;
 
 /**
+ * @type {number}
+ */
+let level = 0;
+
+/**
  * Matrix vector multiplication
  *
  * @param {Object} M
@@ -42,7 +47,23 @@ function rotationMatrix(angle) {
         [-Math.sin(angle), Math.cos(angle)],
     ];
 }
-    
+
+/**
+ * Generate string representation at level n recursively.
+ *
+ * @param {string} axiom
+ * @param {Object} productions
+ * @param {number} n
+ */
+function *generator(axiom, productions, n) {
+    for (const c of axiom) {
+        if (n > 0) {
+            yield* generator(productions[c], productions, n - 1);
+        } else {
+            yield c;
+        }
+    }
+}
 
 /**
  * @param {Object} initialTurtle
@@ -123,6 +144,10 @@ function draw(initialTurtle, animate = false, interval = 20) {
     }
 }
 
+/**
+ * Evolve the L-system by one step
+ *
+ */
 function evolve() {
     let replacement = undefined;
     let next = "";
@@ -161,6 +186,8 @@ window.onload = function(ev) {
         "-": "-",
     };
 
+    level = 0;
+
     const angle = Math.PI / 2;
     const turtle = {
         step: 20,
@@ -170,13 +197,16 @@ window.onload = function(ev) {
     };
 
     draw(turtle);
+    level++;
+    turtle["step"] /= 1.5;
 
     window.addEventListener("keydown", function(ev) {
         switch (ev.key) {
         case " ":
             evolve();
-            turtle["step"] /= 1.5;
             draw(turtle, ev.shiftKey, 2);
+            turtle["step"] /= 1.5;
+            level++;
             console.log(state.length);
             ev.preventDefault();
             break;
