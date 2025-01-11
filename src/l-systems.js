@@ -202,7 +202,7 @@ window.onload = function(ev) {
     select.selectedIndex = 0;
 
     select.addEventListener("input", function(ev) {
-        textarea.value = JSON.stringify(systems[ev.target.selectedIndex]);
+        textarea.value = JSON.stringify(systems[ev.target.selectedIndex], undefined, 2);
     });
 
     const container = document.createElement("div");
@@ -213,8 +213,8 @@ window.onload = function(ev) {
     parent.appendChild(container);
 
     const textarea = document.createElement("textarea");
-    textarea.value = JSON.stringify(systems[select.selectedIndex]);
-    textarea.rows = 8;
+    textarea.value = JSON.stringify(systems[select.selectedIndex], undefined, 2);
+    textarea.rows = 10;
 
     parent.appendChild(textarea);
 
