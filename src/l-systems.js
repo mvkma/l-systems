@@ -1,12 +1,11 @@
+import {
+    systems
+} from "./systems.js";
+
 /**
  * @type {CanvasRenderingContext2D}
  */
 let ctx = null;
-
-/**
- * @type {Object}
- */
-let productions = null;
 
 /**
  * @type {string}
@@ -147,15 +146,13 @@ function draw(initialTurtle, animate = false, interval = 20) {
 /**
  * Evolve the L-system by one step
  *
+ * @param {Object} productions
  */
-function evolve() {
-    let replacement = undefined;
+function evolve(productions) {
+    let replacement;
     let next = "";
     for (const c of state) {
-        replacement = productions[c];
-        if (replacement === undefined) {
-            continue;
-        }
+        replacement = productions[c] || c;
         next = next + replacement;
     }
     state = next;
@@ -164,36 +161,16 @@ function evolve() {
 window.onload = function(ev) {
     ctx = document.querySelector("canvas").getContext("2d");
 
-    // state = "F-F-F-F";
-    // state = "-F";
-    // state = "F+F+F+F";
-    // state = "F-F-F-F";
-    // state = "F";
-    state = "X";
-
-    productions = {
-        // "F": "F-F+F+FF-F-F+F",
-        // "F": "F+F-F-F+F",
-        // "F": "F+f-FF+F+FF+Ff+FF-f+FF-F-FF-Ff-FFF",
-        // "f": "ffffff",
-        // "F": "F-FF--F-F",
-        // "F": "F[+F]F[-F]F",
-        "F": "FF",
-        "X": "F[+X][-X]FX",
-        "[": "[",
-        "]": "]",
-        "+": "+",
-        "-": "-",
-    };
-
     level = 0;
 
-    const angle = Math.PI / 2;
+    const system = systems[5];
+    state = system["axiom"];
+
     const turtle = {
         step: 20,
         heading: [0.0, -1.0],
         position: [ctx.canvas.width / 2, ctx.canvas.height / 1],
-        angle: Math.PI / 180 * 25,
+        angle: Math.PI / 180 * system["angle"],
     };
 
     draw(turtle);
@@ -203,11 +180,11 @@ window.onload = function(ev) {
     window.addEventListener("keydown", function(ev) {
         switch (ev.key) {
         case " ":
-            evolve();
+            evolve(system["productions"]);
+            console.log(level, state.length);
             draw(turtle, ev.shiftKey, 2);
             turtle["step"] /= 1.5;
             level++;
-            console.log(state.length);
             ev.preventDefault();
             break;
         default:
