@@ -13,11 +13,6 @@ let ctx = null;
 let state = null;
 
 /**
- * @type {number}
- */
-let level = 0;
-
-/**
  * Matrix vector multiplication
  *
  * @param {Object} M
@@ -158,12 +153,15 @@ function evolve(productions) {
     state = next;
 }
 
-window.onload = function(ev) {
-    ctx = document.querySelector("canvas").getContext("2d");
-
-    level = 0;
-
-    const system = systems[5];
+/**
+ * Evolve system to the given level
+ *
+ * @param {Object} system
+ * @param {number} level
+ * @param {boolean} animate
+ * @param {number} interval
+ */
+function run(system, level, animate = false, interval = 20) {
     state = system["axiom"];
 
     const turtle = {
@@ -171,20 +169,28 @@ window.onload = function(ev) {
         heading: [0.0, -1.0],
         position: [ctx.canvas.width / 2, ctx.canvas.height / 1],
         angle: Math.PI / 180 * system["angle"],
-    };
+    }
 
-    draw(turtle);
-    level++;
-    turtle["step"] /= 1.5;
+    console.log(system);
+
+    let n = 0;
+    while (n < level) {
+        evolve(system["productions"]);
+        draw(turtle, animate, interval);
+        turtle["step"] /= 1.5;
+        n++;
+    }
+}
+
+window.onload = function(ev) {
+    ctx = document.querySelector("canvas").getContext("2d");
+
+    run(systems[5], 5);
 
     window.addEventListener("keydown", function(ev) {
         switch (ev.key) {
         case " ":
-            evolve(system["productions"]);
-            console.log(level, state.length);
-            draw(turtle, ev.shiftKey, 2);
-            turtle["step"] /= 1.5;
-            level++;
+            run(systems[5], 6);
             ev.preventDefault();
             break;
         default:
