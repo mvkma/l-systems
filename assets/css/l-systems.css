@@ -91,3 +91,7 @@ canvas {
     height: 600px;
 }
 
+textarea {
+    width: 100%;
+    resize: vertical;
+}

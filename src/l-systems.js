@@ -185,12 +185,47 @@ function run(system, level, animate = false, interval = 20) {
 window.onload = function(ev) {
     ctx = document.querySelector("canvas").getContext("2d");
 
-    run(systems[5], 5);
+    const parent = document.querySelector("#simulation-rules");
+
+    const label = document.createElement("label");
+    label.setAttribute("for", "system-select");
+    label.textContent = "System:";
+
+    const select = document.createElement("select");
+    select.id = "system-select";
+
+    for (const system of systems) {
+        const option = document.createElement("option");
+        option.textContent = system["name"];
+        select.appendChild(option);
+    }
+    select.selectedIndex = 0;
+
+    select.addEventListener("input", function(ev) {
+        textarea.value = JSON.stringify(systems[ev.target.selectedIndex]);
+    });
+
+    const container = document.createElement("div");
+    container.setAttribute("class", "param-row");
+    container.appendChild(label);
+    container.appendChild(select);
+
+    parent.appendChild(container);
+
+    const textarea = document.createElement("textarea");
+    textarea.value = JSON.stringify(systems[select.selectedIndex]);
+    textarea.rows = 8;
+
+    parent.appendChild(textarea);
 
     window.addEventListener("keydown", function(ev) {
         switch (ev.key) {
-        case " ":
-            run(systems[5], 6);
+        case "Enter":
+            if (!ev.shiftKey) {
+                break;
+            }
+            const system = JSON.parse(textarea.value);
+            run(system, system["level"]);
             ev.preventDefault();
             break;
         default:
