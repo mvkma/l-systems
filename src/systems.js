@@ -58,6 +58,39 @@ const systems = [
             "X": "F[+X][-X]FX",
         },
     },
+    {
+        name: "six (fass)",
+        angle: 90,
+        axiom: "-L",
+        level: 4,
+        productions: {
+            "L": "LF+RFR+FL-F-LFLFL-FRFR+",
+            "R": "-LFLF+RFRFR+F+RF-LFL-FR",
+        },
+    },
+    {
+        name: "seven (peano)",
+        angle: 90,
+        axiom: "L",
+        level: 4,
+        productions: {
+            "L": "LFRFL-F-RFLFR+F+LFRFL",
+            "R": "RFLFR+F+LFRFL-F-RFLFR",
+        },
+    },
+    {
+        name: "eight (stochastic)",
+        angle: 25,
+        axiom: "F",
+        level: 2,
+        productions: {
+            "F": [
+                "F[+F]F[-F]F",
+                "F[+F]F",
+                "F[-F]F",
+            ],
+        },
+    }
 ];
 
 export {

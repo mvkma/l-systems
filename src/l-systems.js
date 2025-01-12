@@ -13,6 +13,17 @@ let ctx = null;
 let state = null;
 
 /**
+ * @type {Uint16Array}
+ *
+ */
+let random = null;
+
+/**
+ * @type {function}
+ */
+let randint = null;
+
+/**
  * Matrix vector multiplication
  *
  * @param {Object} M
@@ -148,6 +159,9 @@ function evolve(productions) {
     let next = "";
     for (const c of state) {
         replacement = productions[c] || c;
+        if (replacement.constructor === Array) {
+            replacement = replacement[randint() % replacement.length];
+        }
         next = next + replacement;
     }
     state = next;
@@ -181,6 +195,20 @@ function run(system, level, animate = false, interval = 20) {
         n++;
     }
 }
+
+/**
+ * Linear feedback shift register
+ *
+ * @param {number} seed
+ */
+function lfsr(seed) {
+    const start = seed;
+    let lfsr = start;
+    return () => {
+        lfsr = (lfsr >> 1) | (((lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) ^ (lfsr >> 12)) & 1) << 15)
+        return lfsr;
+    };
+};
 
 window.onload = function(ev) {
     ctx = document.querySelector("canvas").getContext("2d");
@@ -232,4 +260,18 @@ window.onload = function(ev) {
             break;
         }
     });
+
+    const period = (1 << 16) - 1;
+    const gen = lfsr(Math.floor(Math.random() * period));
+    random = new Uint16Array(period);
+    for (let i = 0; i < period; i++) {
+        random[i] = gen();
+    }
+
+    let i = 0;
+    randint = function() {
+        i += 1;
+        i %= period;
+        return random[i];
+    }
 }
