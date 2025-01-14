@@ -149,6 +149,10 @@ function draw(initialTurtle, animate = false, interval = 20, zoom = 1.0) {
     let cur, mat;
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.translate(ctx.canvas.width / 2, ctx.canvas.height / 2);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-ctx.canvas.width / 2, -ctx.canvas.height / 2);
+
     ctx.lineWidth = 1.0;
     ctx.strokeStyle = "lightblue";
 
@@ -202,6 +206,7 @@ function draw(initialTurtle, animate = false, interval = 20, zoom = 1.0) {
         }
         ctx.stroke();
     }
+    ctx.resetTransform();
 }
 
 /**
@@ -300,19 +305,60 @@ window.onload = function(ev) {
 
     parent.appendChild(textarea);
 
+    let system = undefined;
+    let zoom = 1.0;
+
     window.addEventListener("keydown", function(ev) {
         switch (ev.key) {
         case "Enter":
             if (!ev.shiftKey) {
                 break;
             }
-            const system = JSON.parse(textarea.value);
+            system = JSON.parse(textarea.value);
             run(system, system["level"]);
+            ev.preventDefault();
+            break;
+        case "a":
+            let angle = 0.0;
+            system = system || JSON.parse(textarea.value);
+            run(system, system["level"]);
+
+            const timer = window.setInterval(function () {
+                if (angle > 360.0) {
+                    window.clearInterval(timer);
+                    console.log("done");
+                }
+                angle += 0.5;
+                draw({
+                    step: 10,
+                    heading: [0.0, -1.0],
+                    position: [0, 0],
+                    angle: Math.PI / 180 * angle
+                });
+
+            }, 50);
             ev.preventDefault();
             break;
         default:
             break;
+    }
+                           });
+
+    ctx.canvas.addEventListener("wheel", function(ev) {
+        if (state === null) {
+            ev.preventDefault();
+            return ;
         }
+
+        system = system || JSON.parse(textarea.value);
+        zoom += ev.deltaY < 0 ? 0.1 : -0.1;
+        draw({
+            step: 10,
+            heading: [0.0, -1.0],
+            position: [0, 0],
+            angle: Math.PI / 180 * system["angle"]
+        }, false, 0, zoom);
+        ev.preventDefault();
     });
 
     const period = (1 << 16) - 1;
