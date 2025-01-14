@@ -72,9 +72,8 @@ function *generator(axiom, productions, n) {
 
 /**
  * @param {Object} initialTurtle
- * @param {boolean} animate
  */
-function draw(initialTurtle, animate = false, interval = 20) {
+function centerTransform(initialTurtle) {
     const stack = [];
     let turtle = new Float32Array([...initialTurtle["position"], ...initialTurtle["heading"]]);
     const step = initialTurtle["step"];
@@ -82,7 +81,72 @@ function draw(initialTurtle, animate = false, interval = 20) {
     const rotPos = rotationMatrix(initialTurtle["angle"]);
     const rotNeg = rotationMatrix(-initialTurtle["angle"]);
 
-    let cur;
+    let cur, mat;
+
+    const bounds = new Float32Array([turtle[0], turtle[0], turtle[1], turtle[1]]);
+
+    for (const c of state) {
+        switch (c) {
+        case "F":
+        case "f":
+            turtle[0] = turtle[0] + step * turtle[2];
+            turtle[1] = turtle[1] + step * turtle[3];
+            bounds[0] = Math.min(bounds[0], turtle[0]);
+            bounds[1] = Math.max(bounds[1], turtle[0]);
+            bounds[2] = Math.min(bounds[2], turtle[1]);
+            bounds[3] = Math.max(bounds[3], turtle[1]);
+            break;
+        case "+":
+        case "-":
+            cur = turtle.slice(2, 4);
+            mat = c === "+" ? rotPos : rotNeg;
+            turtle[2] = cur[0] * mat[0][0] + cur[1] * mat[0][1];
+            turtle[3] = cur[0] * mat[1][0] + cur[1] * mat[1][1];
+            break;
+        case "[":
+            stack.push(turtle.slice());
+            break;
+        case "]":
+            turtle = stack.pop();
+            break;
+        default:
+            break;
+        }
+
+    }
+
+    const dx = bounds[1] - bounds[0];
+    const dy = bounds[3] - bounds[2];
+
+    const r = Math.max(dx / ctx.canvas.width, dy / ctx.canvas.height);
+
+    const sx = (ctx.canvas.width - dx / r) / 2.0;
+    const sy = (ctx.canvas.height - dy / r) / 2.0;
+
+    return [r, -bounds[0] / r + sx, -bounds[2] / r + sy];
+}
+
+/**
+ * @param {Object} initialTurtle
+ * @param {boolean} animate
+ */
+function draw(initialTurtle, animate = false, interval = 20, zoom = 1.0) {
+    const stack = [];
+
+    const [r, deltax, deltay] = centerTransform(initialTurtle);
+
+    let turtle = new Float32Array([
+        initialTurtle["position"][0] + deltax,
+        initialTurtle["position"][1] + deltay,
+        initialTurtle["heading"][0],
+        initialTurtle["heading"][1],
+    ]);
+    const step = initialTurtle["step"] / r;
+
+    const rotPos = rotationMatrix(initialTurtle["angle"]);
+    const rotNeg = rotationMatrix(-initialTurtle["angle"]);
+
+    let cur, mat;
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.lineWidth = 1.0;
@@ -93,27 +157,18 @@ function draw(initialTurtle, animate = false, interval = 20) {
 
     const drawingStep = function (c) {
         switch (c) {
-        case "f":
-            // turtle["position"] = turtle["position"].map((v, i) => v + turtle["step"] * turtle["heading"][i]);
-            turtle[0] = turtle[0] + step * turtle[2];
-            turtle[1] = turtle[1] + step * turtle[3];
-            ctx.moveTo(...turtle);
-            break;
         case "F":
-            // turtle["position"] = turtle["position"].map((v, i) => v + turtle["step"] * turtle["heading"][i]);
+        case "f":
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            ctx.lineTo(...turtle);
+            c === "f" ? ctx.moveTo(...turtle) : ctx.lineTo(...turtle);
             break;
         case "+":
-            cur = turtle.slice(2, 4);
-            turtle[2] = cur[0] * rotPos[0][0] + cur[1] * rotPos[0][1];
-            turtle[3] = cur[0] * rotPos[1][0] + cur[1] * rotPos[1][1];
-            break;
         case "-":
             cur = turtle.slice(2, 4);
-            turtle[2] = cur[0] * rotNeg[0][0] + cur[1] * rotNeg[0][1];
-            turtle[3] = cur[0] * rotNeg[1][0] + cur[1] * rotNeg[1][1];
+            mat = c === "+" ? rotPos : rotNeg;
+            turtle[2] = cur[0] * mat[0][0] + cur[1] * mat[0][1];
+            turtle[3] = cur[0] * mat[1][0] + cur[1] * mat[1][1];
             break;
         case "[":
             stack.push(turtle.slice());
@@ -179,9 +234,9 @@ function run(system, level, animate = false, interval = 20) {
     state = system["axiom"];
 
     const turtle = {
-        step: 20,
+        step: 10,
         heading: [0.0, -1.0],
-        position: [ctx.canvas.width / 2, ctx.canvas.height / 1],
+        position: [0, 0],
         angle: Math.PI / 180 * system["angle"],
     }
 
@@ -190,10 +245,9 @@ function run(system, level, animate = false, interval = 20) {
     let n = 0;
     while (n < level) {
         evolve(system["productions"]);
-        draw(turtle, animate, interval);
-        turtle["step"] /= 1.5;
         n++;
     }
+    draw(turtle, animate, interval);
 }
 
 /**
