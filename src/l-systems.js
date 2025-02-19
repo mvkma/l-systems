@@ -306,7 +306,35 @@ window.onload = function(ev) {
     parent.appendChild(textarea);
 
     let system = undefined;
+    let animate = false;
     let zoom = 1.0;
+    let time = 0.0;
+    let angle = 0.0;
+
+    const animateCallback = function() {
+        if (system === undefined) {
+            system = JSON.parse(textarea.value);
+            run(system, system["level"]);
+        }
+
+        if (time >= 1.0) {
+            time = 0.0;
+        }
+
+        angle = 0.5 + 4.0 * Math.pow((time - 0.5), 3.0);
+        angle *= 180;
+        time += 0.005;
+        draw({
+            step: 10,
+            heading: [0.0, -1.0],
+            position: [0, 0],
+            angle: Math.PI / 180 * angle
+        });
+
+        if (animate) {
+            window.requestAnimationFrame(() => animateCallback());
+        }
+    }
 
     window.addEventListener("keydown", function(ev) {
         switch (ev.key) {
@@ -318,31 +346,28 @@ window.onload = function(ev) {
             run(system, system["level"]);
             ev.preventDefault();
             break;
+        case "s":
+            system = undefined;
+            zoom = 1.0;
+            time = 0.0;
+            angle = 0.0;
+
+            ev.preventDefault();
+            break;
         case "a":
-            let angle = 0.0;
-            system = system || JSON.parse(textarea.value);
-            run(system, system["level"]);
+            animate = !animate;
+            console.log(animate);
 
-            const timer = window.setInterval(function () {
-                if (angle > 360.0) {
-                    window.clearInterval(timer);
-                    console.log("done");
-                }
-                angle += 0.5;
-                draw({
-                    step: 10,
-                    heading: [0.0, -1.0],
-                    position: [0, 0],
-                    angle: Math.PI / 180 * angle
-                });
+            if (animate) {
+                window.requestAnimationFrame(() => animateCallback());
+            }
 
-            }, 50);
             ev.preventDefault();
             break;
         default:
             break;
-    }
-                           });
+        }
+    });
 
     ctx.canvas.addEventListener("wheel", function(ev) {
         if (state === null) {
