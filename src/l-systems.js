@@ -133,23 +133,11 @@ function centerTransform(initialTurtle) {
 
 /**
  * Plot state linearly
+ *
+ * @param {number} depth
  */
-function plot() {
+function plot(depth) {
     ctx1.clearRect(0, 0, ctx1.canvas.width, ctx1.canvas.height);
-
-    let cur = 1;
-    let depth = 1;
-
-    for (const c of state) {
-        if (c === "[") {
-            cur += 1;
-            depth = Math.max(depth, cur);
-        } else if (c === "]") {
-            cur -= 1;
-        } else {
-            continue;
-        }
-    }
 
     let x = 0;
     let y = 0;
@@ -288,6 +276,46 @@ function evolve(productions) {
 }
 
 /**
+ * Count symbols and calculate stack depth
+ *
+ * @returns {Object}
+ */
+function statistics() {
+    const counts = {};
+    let cur = 1;
+    let depth = 1;
+
+    for (const c of state) {
+        counts[c] = counts[c] + 1 || 0;
+
+        if (c === "[") {
+            cur += 1;
+            depth = Math.max(depth, cur);
+        } else if (c === "]") {
+            cur -= 1;
+        } else {
+            continue;
+        }
+    }
+
+    return {
+        "counts": counts,
+        "depth": depth,
+        "length": state.length,
+    };
+}
+
+/**
+ * Show statistics
+ *
+ * @param {Object} stats
+ */
+function show(stats) {
+    document.querySelector("#stats-length").textContent = stats["length"];
+    document.querySelector("#stats-depth").textContent = stats["depth"];
+}
+
+/**
  * Evolve system to the given level
  *
  * @param {Object} system
@@ -312,7 +340,11 @@ function run(system, level, animate = false, interval = 20) {
         evolve(system["productions"]);
         n++;
     }
-    plot();
+
+    const stats = statistics();
+    console.log(stats);
+    show(stats);
+    plot(stats["depth"]);
     draw(turtle, animate, interval);
 }
 
@@ -406,7 +438,6 @@ window.onload = function(ev) {
             }
             system = JSON.parse(textarea.value);
             run(system, system["level"], ev.ctrlKey, 10);
-            plot();
             ev.preventDefault();
             break;
         case "s":
