@@ -313,6 +313,24 @@ function statistics() {
 function show(stats) {
     document.querySelector("#stats-length").textContent = stats["length"];
     document.querySelector("#stats-depth").textContent = stats["depth"];
+
+    const dl = document.createElement("dl");
+    for (const k of Object.keys(stats["counts"]).sort()) {
+        const dt = document.createElement("dt");
+        const dd = document.createElement("dd");
+        dt.textContent = k;
+        dd.textContent = stats["counts"][k];
+        dl.appendChild(dt);
+        dl.appendChild(dd);
+    }
+
+    const counts = document.querySelector("#counts");
+    counts.removeChild(counts.firstChild);
+    counts.appendChild(dl);
+
+    document.querySelector("#timings-evolve").textContent = stats["evolve"] + " ms";
+    document.querySelector("#timings-plot").textContent = stats["plot"] + " ms";
+    document.querySelector("#timings-turtle").textContent = stats["turtle"] + " ms";
 }
 
 /**
@@ -335,17 +353,30 @@ function run(system, level, animate = false, interval = 20) {
 
     console.log(system);
 
+    let stats = {};
+    let t0;
+
     let n = 0;
+    t0 = performance.now();
     while (n < level) {
         evolve(system["productions"]);
         n++;
     }
+    stats["evolve"] = performance.now() - t0;
 
-    const stats = statistics();
-    console.log(stats);
-    show(stats);
+    stats = {...stats, ...statistics()};
+
+    t0 = performance.now();
     plot(stats["depth"]);
+    stats["plot"] = performance.now() - t0;
+
+    t0 = performance.now();
     draw(turtle, animate, interval);
+    stats["turtle"] = performance.now() - t0;
+
+    console.log(statistics);
+
+    show(stats);
 }
 
 /**

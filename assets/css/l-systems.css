@@ -76,7 +76,7 @@ dt {
 }
 
 dd:before {
-    content: "-";
+    content: ":";
     margin-right: 1em;
 }
 
