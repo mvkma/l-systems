@@ -5,7 +5,12 @@ import {
 /**
  * @type {CanvasRenderingContext2D}
  */
-let ctx = null;
+let ctx0 = null;
+
+/**
+ * @type {CanvasRenderingContext2D}
+ */
+let ctx1 = null;
 
 /**
  * @type {string}
@@ -118,12 +123,68 @@ function centerTransform(initialTurtle) {
     const dx = bounds[1] - bounds[0];
     const dy = bounds[3] - bounds[2];
 
-    const r = Math.max(dx / ctx.canvas.width, dy / ctx.canvas.height);
+    const r = Math.max(dx / ctx0.canvas.width, dy / ctx0.canvas.height);
 
-    const sx = (ctx.canvas.width - dx / r) / 2.0;
-    const sy = (ctx.canvas.height - dy / r) / 2.0;
+    const sx = (ctx0.canvas.width - dx / r) / 2.0;
+    const sy = (ctx0.canvas.height - dy / r) / 2.0;
 
     return [r, -bounds[0] / r + sx, -bounds[2] / r + sy];
+}
+
+/**
+ * Plot state linearly
+ */
+function plot() {
+    ctx1.clearRect(0, 0, ctx1.canvas.width, ctx1.canvas.height);
+
+    let cur = 1;
+    let depth = 1;
+
+    for (const c of state) {
+        if (c === "[") {
+            cur += 1;
+            depth = Math.max(depth, cur);
+        } else if (c === "]") {
+            cur -= 1;
+        } else {
+            continue;
+        }
+    }
+
+    let x = 0;
+    let y = 0;
+    let dx = ctx1.canvas.width / state.length;
+    let dy = ctx1.canvas.height / depth;
+
+    for (const c of state) {
+        ctx1.fillStyle = "yellow";
+        switch (c) {
+        case "F":
+            ctx1.fillStyle = "lightblue";
+            break;
+        case "f":
+            ctx1.fillStyle = "lightgrey";
+            break;
+        case "+":
+            ctx1.fillStyle = "green";
+            break;
+        case "-":
+            ctx1.fillStyle = "red";
+            break;
+        case "[":
+            y += dy / 2;
+            ctx1.fillStyle = "grey";
+            break;
+        case "]":
+            y -= dy / 2;
+            ctx1.fillStyle = "grey";
+            break;
+        default:
+            break;
+        }
+        ctx1.fillRect(x, y, dx, dy);
+        x += dx;
+    }
 }
 
 /**
@@ -148,16 +209,16 @@ function draw(initialTurtle, animate = false, interval = 20, zoom = 1.0) {
 
     let cur, mat;
 
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.translate(ctx.canvas.width / 2, ctx.canvas.height / 2);
-    ctx.scale(zoom, zoom);
-    ctx.translate(-ctx.canvas.width / 2, -ctx.canvas.height / 2);
+    ctx0.clearRect(0, 0, ctx0.canvas.width, ctx0.canvas.height);
+    ctx0.translate(ctx0.canvas.width / 2, ctx0.canvas.height / 2);
+    ctx0.scale(zoom, zoom);
+    ctx0.translate(-ctx0.canvas.width / 2, -ctx0.canvas.height / 2);
 
-    ctx.lineWidth = 1.0;
-    ctx.strokeStyle = "lightblue";
+    ctx0.lineWidth = 1.0;
+    ctx0.strokeStyle = "lightblue";
 
-    ctx.beginPath();
-    ctx.moveTo(...turtle);
+    ctx0.beginPath();
+    ctx0.moveTo(...turtle);
 
     const drawingStep = function (c) {
         switch (c) {
@@ -165,7 +226,7 @@ function draw(initialTurtle, animate = false, interval = 20, zoom = 1.0) {
         case "f":
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            c === "f" ? ctx.moveTo(...turtle) : ctx.lineTo(...turtle);
+            c === "f" ? ctx0.moveTo(...turtle) : ctx0.lineTo(...turtle);
             break;
         case "+":
         case "-":
@@ -179,7 +240,7 @@ function draw(initialTurtle, animate = false, interval = 20, zoom = 1.0) {
             break;
         case "]":
             turtle = stack.pop();
-            ctx.moveTo(...turtle);
+            ctx0.moveTo(...turtle);
             break;
         default:
             break;
@@ -193,20 +254,19 @@ function draw(initialTurtle, animate = false, interval = 20, zoom = 1.0) {
                 window.clearInterval(timer);
                 console.log("done");
             }
-            //console.log(i, state[i]);
-            ctx.beginPath();
-            ctx.moveTo(...turtle["position"]);
+            ctx0.beginPath();
+            ctx0.moveTo(...turtle);
             drawingStep(state[i]);
-            ctx.stroke();
+            ctx0.stroke();
             i++;
         }, interval);
     } else {
         for (const c of state) {
             drawingStep(c);
         }
-        ctx.stroke();
+        ctx0.stroke();
     }
-    ctx.resetTransform();
+    ctx0.resetTransform();
 }
 
 /**
@@ -252,6 +312,7 @@ function run(system, level, animate = false, interval = 20) {
         evolve(system["productions"]);
         n++;
     }
+    plot();
     draw(turtle, animate, interval);
 }
 
@@ -270,7 +331,8 @@ function lfsr(seed) {
 };
 
 window.onload = function(ev) {
-    ctx = document.querySelector("canvas").getContext("2d");
+    ctx0 = document.querySelector("#canvas0").getContext("2d");
+    ctx1 = document.querySelector("#canvas1").getContext("2d");
 
     const parent = document.querySelector("#simulation-rules");
 
@@ -343,7 +405,8 @@ window.onload = function(ev) {
                 break;
             }
             system = JSON.parse(textarea.value);
-            run(system, system["level"]);
+            run(system, system["level"], ev.ctrlKey, 10);
+            plot();
             ev.preventDefault();
             break;
         case "s":
@@ -369,7 +432,7 @@ window.onload = function(ev) {
         }
     });
 
-    ctx.canvas.addEventListener("wheel", function(ev) {
+    ctx0.canvas.addEventListener("wheel", function(ev) {
         if (state === null) {
             ev.preventDefault();
             return ;

@@ -85,10 +85,16 @@ dd {
     grid-column-start: 2;
 }
 
-canvas {
+#canvas0 {
     touch-action: none;
     width: 800px;
     height: 600px;
+}
+
+#canvas1 {
+    touch-action: none;
+    width: 800px;
+    height: 100px;
 }
 
 textarea {
