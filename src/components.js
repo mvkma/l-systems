@@ -8,16 +8,15 @@ class NumberInput extends HTMLInputElement {
     }
 
     setValue(n) {
-        console.log(n);
         if (this.attributes["maxlength"] === undefined) {
             this.value = n.toString();
         } else {
             this.value = n.toString().slice(0, parseInt(this.attributes["maxlength"].value));
         }
+        this.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
     connectedCallback() {
-        console.log(this);
         const step = parseFloat(this.attributes["step"].value) || 0;
 
         this.addEventListener("keydown", function(ev) {
@@ -30,12 +29,10 @@ class NumberInput extends HTMLInputElement {
                 ev.stopPropagation();
                 break;
             case "ArrowUp":
-                console.log(this.getValue());
                 this.setValue(this.getValue() + step);
                 ev.stopPropagation();
                 break;
             case "ArrowDown":
-                console.log(this.getValue());
                 this.setValue(this.getValue() - step);
                 ev.stopPropagation();
                 break;

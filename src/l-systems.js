@@ -209,7 +209,7 @@ function draw(initialTurtle, drawingParams = {}) {
     ctx0.scale(zoom, zoom);
     ctx0.translate(-ctx0.canvas.width / 2, -ctx0.canvas.height / 2);
 
-    ctx0.lineWidth = 1.0;
+    ctx0.lineWidth = drawingParams["linewidth"] || 1.0;
     ctx0.strokeStyle = "lightblue";
 
     ctx0.beginPath();
@@ -471,6 +471,13 @@ window.onload = function(ev) {
         }
     }
 
+    const  drawingParameters = {};
+
+    document.getElementById("linewidth").addEventListener("input", function(ev) {
+        drawingParameters["linewidth"] = ev.target.getValue();
+    });
+    document.getElementById("linewidth").setValue(1.0);
+
     window.addEventListener("keydown", function(ev) {
         switch (ev.key) {
         case "Enter":
@@ -478,7 +485,7 @@ window.onload = function(ev) {
                 break;
             }
             system = JSON.parse(textarea.value);
-            run(system, system["level"], { animate: ev.ctrlKey, interval: 10 });
+            run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
             ev.preventDefault();
             break;
         case "s":
