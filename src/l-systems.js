@@ -2,6 +2,10 @@ import {
     systems
 } from "./systems.js";
 
+import {
+    NumberInput
+} from "./components.js";
+
 /**
  * @type {CanvasRenderingContext2D}
  */
@@ -393,10 +397,13 @@ function lfsr(seed) {
     };
 };
 
+customElements.define("number-input", NumberInput, { extends: "input" });
+
 window.onload = function(ev) {
     ctx0 = document.querySelector("#canvas0").getContext("2d");
     ctx1 = document.querySelector("#canvas1").getContext("2d");
 
+    /*****/
     const parent = document.querySelector("#simulation-rules");
 
     const label = document.createElement("label");
@@ -429,6 +436,7 @@ window.onload = function(ev) {
     textarea.rows = 10;
 
     parent.appendChild(textarea);
+    /*****/
 
     let system = undefined;
     let animate = false;
