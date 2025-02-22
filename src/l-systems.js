@@ -181,10 +181,13 @@ function plot(depth) {
 
 /**
  * @param {Object} initialTurtle
- * @param {boolean} animate
+ * @param {Object} drawingParams
  */
-function draw(initialTurtle, animate = false, interval = 20, zoom = 1.0) {
+function draw(initialTurtle, drawingParams = {}) {
     const stack = [];
+    const animate = drawingParams["animate"] || false;
+    const interval = drawingParams["interval"] || 20;
+    const zoom = drawingParams["zoom"] || 1.0;
 
     const [r, deltax, deltay] = centerTransform(initialTurtle);
 
@@ -342,10 +345,9 @@ function show(stats) {
  *
  * @param {Object} system
  * @param {number} level
- * @param {boolean} animate
- * @param {number} interval
+ * @param {Object} drawingParams
  */
-function run(system, level, animate = false, interval = 20) {
+function run(system, level, drawingParams = {}) {
     state = system["axiom"];
 
     const turtle = {
@@ -375,7 +377,7 @@ function run(system, level, animate = false, interval = 20) {
     stats["plot"] = performance.now() - t0;
 
     t0 = performance.now();
-    draw(turtle, animate, interval);
+    draw(turtle, drawingParams);
     stats["turtle"] = performance.now() - t0;
 
     console.log(statistics);
@@ -476,7 +478,7 @@ window.onload = function(ev) {
                 break;
             }
             system = JSON.parse(textarea.value);
-            run(system, system["level"], ev.ctrlKey, 10);
+            run(system, system["level"], { animate: ev.ctrlKey, interval: 10 });
             ev.preventDefault();
             break;
         case "s":
@@ -515,7 +517,7 @@ window.onload = function(ev) {
             heading: [0.0, -1.0],
             position: [0, 0],
             angle: Math.PI / 180 * system["angle"]
-        }, false, 0, zoom);
+        }, { zoom: zoom });
         ev.preventDefault();
     });
 
