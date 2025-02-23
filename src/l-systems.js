@@ -446,6 +446,13 @@ window.onload = function(ev) {
     let time = 0.0;
     let angle = 0.0;
 
+    const  drawingParameters = {};
+
+    document.getElementById("linewidth").addEventListener("input", function(ev) {
+        drawingParameters["linewidth"] = ev.target.getValue();
+    });
+    document.getElementById("linewidth").setValue(1.0);
+
     const animateCallback = function() {
         if (system === undefined) {
             system = JSON.parse(textarea.value);
@@ -464,19 +471,12 @@ window.onload = function(ev) {
             heading: [0.0, -1.0],
             position: [0, 0],
             angle: Math.PI / 180 * angle
-        });
+        }, drawingParameters);
 
         if (animate) {
             window.requestAnimationFrame(() => animateCallback());
         }
     }
-
-    const  drawingParameters = {};
-
-    document.getElementById("linewidth").addEventListener("input", function(ev) {
-        drawingParameters["linewidth"] = ev.target.getValue();
-    });
-    document.getElementById("linewidth").setValue(1.0);
 
     window.addEventListener("keydown", function(ev) {
         switch (ev.key) {
