@@ -33,6 +33,20 @@ let random = null;
 let randint = null;
 
 /**
+ * @type {Object}{
+ */
+const defaultLineStyle = {
+    draw: false,
+    width: 1.0,
+    color: "red",
+    scale: 1.0,
+    shadowOffsetX: 0.0,
+    shadowOffsetY: 0.0,
+    shadowBlur: 0.0,
+    shadowColor: "rgb(0 0 0 / 0%)",
+};
+
+/**
  * @type {Object}
  */
 let linestyles = {
@@ -41,7 +55,11 @@ let linestyles = {
         width: 1.0,
         color: "red",
         scale: 1.0,
-    },
+        shadowOffsetX: 0.0,
+        shadowOffsetY: 0.0,
+        shadowBlur: 0.0,
+        shadowColor: "rgb(0 0 0 / 0%)",
+    }
 }
 
 /**
@@ -235,9 +253,6 @@ function draw(initialTurtle, drawingParams = {}) {
 
     let prev, draw;
 
-    // ctx0.lineWidth = 1.0;
-    // ctx0.strokeStyle = "lightblue";
-
     ctx0.beginPath();
     ctx0.moveTo(...turtle);
 
@@ -273,6 +288,10 @@ function draw(initialTurtle, drawingParams = {}) {
                 ctx0.moveTo(...turtle);
                 ctx0.lineWidth = linestyles[c]["width"];
                 ctx0.strokeStyle = linestyles[c]["color"];
+                ctx0.shadowOffsetX = linestyles[c]["shadowOffsetX"];
+                ctx0.shadowOffsetY = linestyles[c]["shadowOffsetY"];
+                ctx0.shadowBlur = linestyles[c]["shadowBlur"];
+                ctx0.shadowColor = linestyles[c]["shadowColor"];
                 prev = c;
             }
             turtle[0] = turtle[0] + step * turtle[2];
@@ -478,7 +497,7 @@ function updateLinestyleInput(system) {
         option.textContent = s;
         symbolSelect.appendChild(option);
         if (linestyles[s] === undefined) {
-            linestyles[s] = { draw: false, width: 1.0, color: "lightblue", scale: 1.0 };
+            linestyles[s] = {...defaultLineStyle};
         }
     }
 
