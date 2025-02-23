@@ -42,12 +42,6 @@ let linestyles = {
         color: "red",
         scale: 1.0,
     },
-    "G": {
-        draw: true,
-        width: 1.0,
-        color: "orange",
-        scale: 1.0,
-    },
 }
 
 /**
@@ -505,7 +499,7 @@ window.onload = function(ev) {
 
     systemInput.addEventListener("blur", function(ev) {
         try {
-            system = JSON.parse(systemInput.value);
+            system = JSON.parse(ev.target.value);
         } catch (error) {
             return;
         }
@@ -538,15 +532,17 @@ window.onload = function(ev) {
         }
     });
 
+    let frame = undefined;
     let animate = false;
-    let zoom = 1.0;
     let time = 0.0;
     let angle = 0.0;
 
-    const  drawingParameters = {};
+    const  drawingParameters = {
+        zoom: 1.0,
+    };
 
     const animateCallback = function() {
-        if (system === undefined) {
+        if (system === undefined || state === null) {
             system = JSON.parse(systemInput.value);
             run(system, system["level"]);
         }
@@ -566,7 +562,7 @@ window.onload = function(ev) {
         }, drawingParameters);
 
         if (animate) {
-            window.requestAnimationFrame(() => animateCallback());
+            frame = window.requestAnimationFrame(() => animateCallback());
         }
     }
 
@@ -576,21 +572,24 @@ window.onload = function(ev) {
             if (!ev.shiftKey) {
                 break;
             }
+
+            animate = false;
+            if (frame !== undefined) {
+                window.cancelAnimationFrame(frame);
+            }
+
             system = JSON.parse(systemInput.value);
             run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
             ev.preventDefault();
             break;
-        case "s":
-            system = undefined;
-            zoom = 1.0;
-            time = 0.0;
-            angle = 0.0;
-
-            ev.preventDefault();
-            break;
-        case "a":
+        case " ":
+            if (ev.ctrlKey) {
+                system = undefined;
+                drawingParameters["zoom"] = 1.0;
+                time = 0.0;
+                angle = 0.0;
+            }
             animate = !animate;
-            console.log(animate);
 
             if (animate) {
                 window.requestAnimationFrame(() => animateCallback());
@@ -610,13 +609,16 @@ window.onload = function(ev) {
         }
 
         system = system || JSON.parse(systemInput.value);
-        zoom += ev.deltaY < 0 ? 0.1 : -0.1;
-        draw({
-            step: 10,
-            heading: [0.0, -1.0],
-            position: [0, 0],
-            angle: Math.PI / 180 * system["angle"]
-        }, { zoom: zoom });
+        drawingParameters["zoom"] += ev.deltaY < 0 ? 0.1 : -0.1;
+
+        if (!animate) {
+            draw({
+                step: 10,
+                heading: [0.0, -1.0],
+                position: [0, 0],
+                angle: Math.PI / 180 * system["angle"]
+            }, { zoom: drawingParameters["zoom"] });
+        }
         ev.preventDefault();
     });
 
