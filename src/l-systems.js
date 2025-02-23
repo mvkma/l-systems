@@ -312,6 +312,17 @@ function draw(initialTurtle, drawingParams = {}) {
             ctx0.moveTo(...turtle);
             drawingStep(state[i]);
             ctx0.stroke();
+            ctx1.beginPath();
+            ctx1.fillStyle = "lightblue";
+            ctx1.arc(
+                ctx1.canvas.width * i / state.length,
+                ctx1.canvas.height * 0.9,
+                3.0,
+                0.0,
+                Math.PI * 2.0,
+                false
+            );
+            ctx1.fill();
             i++;
         }, interval);
     } else {
