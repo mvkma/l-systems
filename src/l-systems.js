@@ -6,6 +6,12 @@ import {
     NumberInput
 } from "./components.js";
 
+// import {
+//     runLanguage
+// } from "./language.js";
+//
+// runLanguage();
+
 /**
  * @type {CanvasRenderingContext2D}
  */
