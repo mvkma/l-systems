@@ -445,23 +445,99 @@ function lfsr(seed) {
     };
 };
 
+/**
+ * Extract symbols from production rules
+ *
+ * @param {Object} productions
+ *
+ * @returns {Array}
+ */
+function extractSymbols(productions) {
+    let symbols = new Set(Object.keys(productions));
+
+    for (const rule of Object.values(productions)) {
+        symbols = symbols.union(new Set(rule));
+    }
+
+    return (new Array(...symbols)).filter(
+        k => k.length === 1 && k.codePointAt(0) >= 65 && k.codePointAt(0) <= 90
+    ).sort();
+}
+
+/**
+ * Update linestyle textarea
+ *
+ * @param {Object} system
+ */
+function updateLinestyleInput(system) {
+    const symbolSelect = document.querySelector("#symbol-select");
+
+    symbolSelect.selectedIndex = 0;
+    while (symbolSelect.firstChild) {
+        symbolSelect.removeChild(symbolSelect.firstChild);
+    }
+
+    const symbols = extractSymbols(system["productions"]);
+    for (const s of symbols) {
+        const option = document.createElement("option");
+        option.value = s;
+        option.textContent = s;
+        symbolSelect.appendChild(option);
+        if (linestyles[s] === undefined) {
+            linestyles[s] = { draw: false, width: 1.0, color: "lightblue", scale: 1.0 };
+        }
+    }
+
+    symbolSelect.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
 customElements.define("number-input", NumberInput, { extends: "input" });
 
 window.onload = function(ev) {
     ctx0 = document.querySelector("#canvas0").getContext("2d");
     ctx1 = document.querySelector("#canvas1").getContext("2d");
 
-    const select = document.querySelector("#system-select");
-    select.selectedIndex = 0;
+    let system = undefined;
 
-    select.addEventListener("input", function(ev) {
-        textarea.value = JSON.stringify(systems[ev.target.selectedIndex], undefined, 2);
+    const systemSelect = document.querySelector("#system-select");
+    const systemInput = document.querySelector("#system-input");
+    systemSelect.selectedIndex = 0;
+
+    systemInput.addEventListener("blur", function(ev) {
+        try {
+            system = JSON.parse(systemInput.value);
+        } catch (error) {
+            return;
+        }
+
+        updateLinestyleInput(system);
     });
 
-    const textarea = document.querySelector("#system-input");
-    textarea.value = JSON.stringify(systems[select.selectedIndex], undefined, 2);
+    systemSelect.addEventListener("input", function(ev) {
+        system = systems[ev.target.selectedIndex];
+        systemInput.value = JSON.stringify(system, undefined, 2);
+        updateLinestyleInput(system);
+    });
+    systemInput.value = JSON.stringify(systems[systemSelect.selectedIndex], undefined, 2);
+    system = systems[systemSelect.selectedIndex];
+    updateLinestyleInput(system);
 
-    let system = undefined;
+    const symbolSelect = document.querySelector("#symbol-select");
+    const linestyleInput = document.querySelector("#linestyle-input");
+
+    symbolSelect.addEventListener("input", function(ev) {
+        linestyleInput.value = JSON.stringify(linestyles[ev.target.value], undefined, 2);
+    });
+    linestyleInput.value = JSON.stringify(linestyles[symbolSelect.value], undefined, 2);
+
+    linestyleInput.addEventListener("input", function(ev) {
+        try {
+            linestyles[symbolSelect.value] = JSON.parse(ev.target.value);
+        } catch (error) {
+            return;
+        }
+    });
+
     let animate = false;
     let zoom = 1.0;
     let time = 0.0;
@@ -469,14 +545,9 @@ window.onload = function(ev) {
 
     const  drawingParameters = {};
 
-    document.querySelector("#linewidth").addEventListener("input", function(ev) {
-        drawingParameters["linewidth"] = ev.target.getValue();
-    });
-    document.querySelector("#linewidth").setValue(1.0);
-
     const animateCallback = function() {
         if (system === undefined) {
-            system = JSON.parse(textarea.value);
+            system = JSON.parse(systemInput.value);
             run(system, system["level"]);
         }
 
@@ -505,7 +576,7 @@ window.onload = function(ev) {
             if (!ev.shiftKey) {
                 break;
             }
-            system = JSON.parse(textarea.value);
+            system = JSON.parse(systemInput.value);
             run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
             ev.preventDefault();
             break;
@@ -538,7 +609,7 @@ window.onload = function(ev) {
             return ;
         }
 
-        system = system || JSON.parse(textarea.value);
+        system = system || JSON.parse(systemInput.value);
         zoom += ev.deltaY < 0 ? 0.1 : -0.1;
         draw({
             step: 10,
