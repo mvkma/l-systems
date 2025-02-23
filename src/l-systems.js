@@ -33,6 +33,24 @@ let random = null;
 let randint = null;
 
 /**
+ * @type {Object}
+ */
+let linestyles = {
+    "F": {
+        draw: true,
+        width: 1.0,
+        color: "red",
+        scale: 1.0,
+    },
+    "G": {
+        draw: true,
+        width: 1.0,
+        color: "orange",
+        scale: 1.0,
+    },
+}
+
+/**
  * Matrix vector multiplication
  *
  * @param {Object} M
@@ -91,12 +109,12 @@ function centerTransform(initialTurtle) {
     const rotNeg = rotationMatrix(-initialTurtle["angle"]);
 
     let cur, mat;
+    let draw, prev;
 
     const bounds = new Float32Array([turtle[0], turtle[0], turtle[1], turtle[1]]);
 
     for (const c of state) {
         switch (c) {
-        case "F":
         case "f":
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
@@ -119,6 +137,18 @@ function centerTransform(initialTurtle) {
             turtle = stack.pop();
             break;
         default:
+            if (prev !== c) {
+                draw = (linestyles[c] && linestyles[c]["draw"]) || false;
+                if (!draw) {
+                    break;
+                }
+            }
+            turtle[0] = turtle[0] + step * turtle[2];
+            turtle[1] = turtle[1] + step * turtle[3];
+            bounds[0] = Math.min(bounds[0], turtle[0]);
+            bounds[1] = Math.max(bounds[1], turtle[0]);
+            bounds[2] = Math.min(bounds[2], turtle[1]);
+            bounds[3] = Math.max(bounds[3], turtle[1]);
             break;
         }
 
@@ -209,19 +239,20 @@ function draw(initialTurtle, drawingParams = {}) {
     ctx0.scale(zoom, zoom);
     ctx0.translate(-ctx0.canvas.width / 2, -ctx0.canvas.height / 2);
 
-    ctx0.lineWidth = drawingParams["linewidth"] || 1.0;
-    ctx0.strokeStyle = "lightblue";
+    let prev, draw;
+
+    // ctx0.lineWidth = 1.0;
+    // ctx0.strokeStyle = "lightblue";
 
     ctx0.beginPath();
     ctx0.moveTo(...turtle);
 
     const drawingStep = function (c) {
         switch (c) {
-        case "F":
         case "f":
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            c === "f" ? ctx0.moveTo(...turtle) : ctx0.lineTo(...turtle);
+            ctx0.moveTo(...turtle);
             break;
         case "+":
         case "-":
@@ -238,6 +269,21 @@ function draw(initialTurtle, drawingParams = {}) {
             ctx0.moveTo(...turtle);
             break;
         default:
+            if (prev !== c) {
+                draw = (linestyles[c] && linestyles[c]["draw"]) || false;
+                if (!draw) {
+                    break;
+                }
+                ctx0.stroke();
+                ctx0.beginPath();
+                ctx0.moveTo(...turtle);
+                ctx0.lineWidth = linestyles[c]["width"];
+                ctx0.strokeStyle = linestyles[c]["color"];
+                prev = c;
+            }
+            turtle[0] = turtle[0] + step * turtle[2];
+            turtle[1] = turtle[1] + step * turtle[3];
+            ctx0.lineTo(...turtle);
             break;
         }
     }
@@ -423,10 +469,10 @@ window.onload = function(ev) {
 
     const  drawingParameters = {};
 
-    document.getElementById("linewidth").addEventListener("input", function(ev) {
+    document.querySelector("#linewidth").addEventListener("input", function(ev) {
         drawingParameters["linewidth"] = ev.target.getValue();
     });
-    document.getElementById("linewidth").setValue(1.0);
+    document.querySelector("#linewidth").setValue(1.0);
 
     const animateCallback = function() {
         if (system === undefined) {

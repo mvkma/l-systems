@@ -81,7 +81,16 @@ const systems = [
                 "F[-F]F",
             ],
         },
-    }
+    },
+    {
+        angle: 60,
+        axiom: "F",
+        level: 4,
+        productions: {
+            "F": "F+G++G-F--FF-G+",
+            "G": "-F+GG++G+F--F-G",
+        },
+    },
 ];
 
 export {
