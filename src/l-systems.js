@@ -405,40 +405,15 @@ window.onload = function(ev) {
     ctx0 = document.querySelector("#canvas0").getContext("2d");
     ctx1 = document.querySelector("#canvas1").getContext("2d");
 
-    /*****/
-    const parent = document.querySelector("#simulation-rules");
-
-    const label = document.createElement("label");
-    label.setAttribute("for", "system-select");
-    label.textContent = "System:";
-
-    const select = document.createElement("select");
-    select.id = "system-select";
-
-    for (const system of systems) {
-        const option = document.createElement("option");
-        option.textContent = system["name"];
-        select.appendChild(option);
-    }
+    const select = document.querySelector("#system-select");
     select.selectedIndex = 0;
 
     select.addEventListener("input", function(ev) {
         textarea.value = JSON.stringify(systems[ev.target.selectedIndex], undefined, 2);
     });
 
-    const container = document.createElement("div");
-    container.setAttribute("class", "param-row");
-    container.appendChild(label);
-    container.appendChild(select);
-
-    parent.appendChild(container);
-
-    const textarea = document.createElement("textarea");
+    const textarea = document.querySelector("#system-input");
     textarea.value = JSON.stringify(systems[select.selectedIndex], undefined, 2);
-    textarea.rows = 10;
-
-    parent.appendChild(textarea);
-    /*****/
 
     let system = undefined;
     let animate = false;

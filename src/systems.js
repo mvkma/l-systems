@@ -3,7 +3,6 @@
  */
 const systems = [
     {
-        name: "zero",
         angle: 90,
         axiom: "F-F-F-F",
         level: 3,
@@ -12,7 +11,6 @@ const systems = [
         },
     },
     {
-        name: "one",
         angle: 90,
         axiom: "-F",
         level: 3,
@@ -21,7 +19,6 @@ const systems = [
         },
     },
     {
-        name: "two",
         angle: 90,
         axiom: "F+F+F+F",
         level: 2,
@@ -31,16 +28,14 @@ const systems = [
         },
     },
     {
-        name: "three",
         angle: 90,
         axiom: "F-F-F-F",
         level: 3,
         productions: {
-            "F": "F-FF--F-F",
+            "F": "FF-F+F-F-FF",
         }
     },
     {
-        name: "four",
         angle: 25,
         axiom: "F",
         level: 4,
@@ -49,7 +44,6 @@ const systems = [
         },
     },
     {
-        name: "five",
         angle: 25,
         axiom: "X",
         level: 6,
@@ -59,7 +53,6 @@ const systems = [
         },
     },
     {
-        name: "six (fass)",
         angle: 90,
         axiom: "-L",
         level: 4,
@@ -69,7 +62,6 @@ const systems = [
         },
     },
     {
-        name: "seven (peano)",
         angle: 90,
         axiom: "L",
         level: 4,
@@ -79,7 +71,6 @@ const systems = [
         },
     },
     {
-        name: "eight (stochastic)",
         angle: 25,
         axiom: "F",
         level: 2,
