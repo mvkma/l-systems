@@ -110,8 +110,8 @@ function shuntingYard(tokens) {
     return result;
 }
 
-function symb(s) {
-    return function(parameters, bindings) {
+function symb(s, parameters) {
+    return function(bindings) {
         const values = {};
 
         for (const [k, rpn] of Object.entries(parameters)) {
@@ -126,28 +126,28 @@ function symb(s) {
     };
 }
 
-function evolve(axiom, rules, level) {
+function evolve(axiom, rules, consts, level) {
     let state = [axiom];
     let rule;
     let next;
     let n = 0;
 
     while (n < level) {
-        console.log(n, stateToString(state));
         next = [];
         for (const s of state) {
             rule = rules[s["symbol"]];
             if (rule === undefined) {
-                next = next.concat([s]);
+                next.push(s);
             } else {
-                next = next.concat(rule(s["values"]));
+                for (const t of rule({...s["values"], ...consts})) {
+                    next.push(t);
+                }
             }
         }
         state = next;
         n++;
     }
 
-    console.log(n, stateToString(state));
     return state;
 }
 
@@ -164,6 +164,55 @@ function stateToString(state) {
     return out;
 }
 
+/**
+ * @param {Array<string>} parameters
+ * @param {string} rule
+ */
+function parseRuleString(parameters, rule) {
+    const rhs = [];
+
+    // assume no more whitespace
+    let i = 0;
+    let j;
+    let k;
+    let s;
+    while (i < rule.length) {
+        if (rule[i] === "(") {
+            const params = {};
+
+            k = 0;
+            j = i + 1;
+            while (true) {
+                if (rule[j] === "," || rule[j] === ")") {
+                    // dirty tokenization
+                    const param = rule.slice(i, j + 1).replace(/([\(\)*+\/-])/g, " $1 ");
+                    // console.log(param);
+                    const rpn = shuntingYard(param.split(" ").filter(t => t.length > 0));
+                    // console.log(rpn);
+                    params[parameters[k]] = rpn;
+                    k++;
+                }
+
+                if (rule[j] === ")") {
+                    break;
+                }
+
+                j++;
+            }
+            i = j + 1;
+            // console.log(params);
+            rhs.push(symb(s, params));
+        } else {
+            s = rule[i];
+            i++;
+        }
+    }
+
+    return function(bindings) {
+        return rhs.map(f => f(bindings));
+    };
+}
+
 const consts = {
     c: 1.0,
     p: 0.3,
@@ -171,26 +220,28 @@ const consts = {
     h: 0.3 * (1.0 - 0.3),
 };
 
-const symbols = {
-    "F": symb("F"),
-    "+": symb("+"),
-    "-": symb("-"),
-};
+// const symbols = {
+//     "F": symb("F"),
+//     "+": symb("+"),
+//     "-": symb("-"),
+// };
 
-const axiom = symbols["F"]({ x: ["x"] }, {x: 1.0});
+const axiom = symb("F", { x: ["x"] })({ x: 1.0 });
 
-const rules = {
-    "F": (bindings) => [
-        symbols["F"]({ x: ["x", "p", "*"] }, {...bindings, ...consts}),
-        symbols["+"]({}, {}),
-        symbols["F"]({ x: ["x", "h", "*"] }, {...bindings, ...consts}),
-        symbols["-"]({}, {}),
-        symbols["-"]({}, {}),
-        symbols["F"]({ x: ["x", "h", "*"] }, {...bindings, ...consts}),
-        symbols["+"]({}, {}),
-        symbols["F"]({ x: ["x", "q", "*"] }, {...bindings, ...consts}),
-    ],
-};
+// const rules = {
+//     "F": (bindings) => [
+//         symb("F", { x: ["x", "p", "*"] })({...bindings, ...consts}),
+//         symb("+", {})({}),
+//         // symb("+", { x: ["x"] })({...bindings, ...consts}),
+//         // symb("+", { x: ["x", "x", "+"] })({...bindings}),
+//         symb("F", { x: ["x", "h", "*"] })({...bindings, ...consts}),
+//         symb("-", {})({}),
+//         symb("-", {})({}),
+//         symb("F", { x: ["x", "h", "*"] })({...bindings, ...consts}),
+//         symb("+", {})({}),
+//         symb("F", { x: ["x", "q", "*"] })({...bindings, ...consts}),
+//     ],
+// };
 
 function runLanguage() {
     // const expr = "x + y * z - a / ( a + b )";
@@ -203,8 +254,17 @@ function runLanguage() {
     // console.log(bindings);
     // console.log(res);
 
-    console.log(consts);
-    const state = evolve(axiom, rules, 2);
+    // console.log(consts);
+    // evolve(axiom, rules, consts, 2);
+
+    const rules2 = {
+        "F": parseRuleString(["x"], "F(x*p)+()F(x*h)-()-()F(x*h)+()F(x*q)"),
+        // "F": parseRuleString(["x"], "F(x*p)+(x)F(x*h)-()-()F(x*h)+()F(x*q)", symbols, consts),
+        // "F": parseRuleString(["x"], "F(x*p)+(x+x)F(x*h)-()-()F(x*h)+()F(x*q)", symbols, consts),
+    };
+
+    const state = evolve(axiom, rules2, consts, 2);
+    console.log(stateToString(state));
 }
 
 export {

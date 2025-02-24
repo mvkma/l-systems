@@ -10,7 +10,7 @@ import {
     runLanguage
 } from "./language.js";
 
-runLanguage();
+window.runLanguage = runLanguage;
 
 /**
  * @type {CanvasRenderingContext2D}
