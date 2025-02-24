@@ -14,7 +14,7 @@ function evolve(axiom, rules, level) {
         console.log(n, stateToString(state));
         next = [];
         for (const s of state) {
-            rule = rules[s["symbol"]] || symb(s["symbol"]);
+            rule = rules[s["symbol"]] || symbols[s["symbol"]];
             next = next.concat(rule(...s["parameters"]));
         }
         state = next;
@@ -45,22 +45,30 @@ const consts = {
     h: 0.3 * (1.0 - 0.3),
 };
 
-const axiom = symb("F")(1.0);
+const symbols = {
+    "F": symb("F"),
+    "+": symb("+"),
+    "-": symb("-"),
+};
+
+const axiom = symbols["F"](1.0);
 
 const rules = {
-    F: (x) => [
-        symb("F")(x * consts["p"]),
-        symb("+")(),
-        symb("F")(x * consts["h"]),
-        symb("-")(),
-        symb("-")(),
-        symb("F")(x * consts["h"]),
-        symb("+")(),
-        symb("F")(x * consts["q"]),
+    "F": (x) => [
+        symbols["F"](x * consts["p"]),
+        symbols["+"](),
+        symbols["F"](x * consts["h"]),
+        symbols["-"](),
+        symbols["-"](),
+        symbols["F"](x * consts["h"]),
+        symbols["+"](),
+        symbols["F"](x * consts["q"]),
     ],
 };
 
 function runLanguage() {
+    console.log(rules);
+    console.log(symbols);
     const state = evolve(axiom, rules, 2);
 }
 
