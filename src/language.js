@@ -110,6 +110,14 @@ function shuntingYard(tokens) {
     return result;
 }
 
+/**
+ * Create symbol with expression parameters
+ *
+ * @param {string} s - name
+ * @param {Object<string,Array<string>} parameters - rpns to evaluate
+ *
+ * @returns {(bindings: any) => any}
+ */
 function symb(s, parameters) {
     return function(bindings) {
         const values = {};
@@ -126,6 +134,16 @@ function symb(s, parameters) {
     };
 }
 
+/**
+ * Evolve system to given level
+ *
+ * @param {any} axiom
+ * @param {Object<string, (b: any) => any[]>} rules
+ * @param {Object<string, number>} consts
+ * @param {number} level
+ *
+ * @returns {any[]}
+ */
 function evolve(axiom, rules, consts, level) {
     let state = [axiom];
     let rule;
@@ -151,6 +169,13 @@ function evolve(axiom, rules, consts, level) {
     return state;
 }
 
+/**
+ * Convert state to string
+ *
+ * @param {any[]} state
+ *
+ * @returns {string}
+ */
 function stateToString(state) {
     let out = "";
 
@@ -165,17 +190,22 @@ function stateToString(state) {
 }
 
 /**
+ * Parse rule string into function that evaluates it (with some parameters)
+ *
  * @param {Array<string>} parameters
  * @param {string} rule
+ *
+ * @returns {(bindings: any) => any[]}
  */
 function parseRuleString(parameters, rule) {
     const rhs = [];
+    const emptyParams = {};
+    for (const c of parameters) {
+        emptyParams[c] = [];
+    }
 
-    // assume no more whitespace
-    let i = 0;
-    let j;
-    let k;
-    let s;
+    let i, j, k, s;
+    i = 0;
     while (i < rule.length) {
         if (rule[i] === "(") {
             const params = {};
@@ -186,9 +216,7 @@ function parseRuleString(parameters, rule) {
                 if (rule[j] === "," || rule[j] === ")") {
                     // dirty tokenization
                     const param = rule.slice(i, j + 1).replace(/([\(\)*+\/-])/g, " $1 ");
-                    // console.log(param);
                     const rpn = shuntingYard(param.split(" ").filter(t => t.length > 0));
-                    // console.log(rpn);
                     params[parameters[k]] = rpn;
                     k++;
                 }
@@ -200,9 +228,12 @@ function parseRuleString(parameters, rule) {
                 j++;
             }
             i = j + 1;
-            // console.log(params);
             rhs.push(symb(s, params));
+            s = undefined;
         } else {
+            if (s !== undefined) {
+                rhs.push(symb(s, emptyParams));
+            }
             s = rule[i];
             i++;
         }
@@ -213,52 +244,20 @@ function parseRuleString(parameters, rule) {
     };
 }
 
-const consts = {
-    c: 1.0,
-    p: 0.3,
-    q: 1.0 - 0.3,
-    h: 0.3 * (1.0 - 0.3),
-};
-
-// const symbols = {
-//     "F": symb("F"),
-//     "+": symb("+"),
-//     "-": symb("-"),
-// };
-
-const axiom = symb("F", { x: ["x"] })({ x: 1.0 });
-
-// const rules = {
-//     "F": (bindings) => [
-//         symb("F", { x: ["x", "p", "*"] })({...bindings, ...consts}),
-//         symb("+", {})({}),
-//         // symb("+", { x: ["x"] })({...bindings, ...consts}),
-//         // symb("+", { x: ["x", "x", "+"] })({...bindings}),
-//         symb("F", { x: ["x", "h", "*"] })({...bindings, ...consts}),
-//         symb("-", {})({}),
-//         symb("-", {})({}),
-//         symb("F", { x: ["x", "h", "*"] })({...bindings, ...consts}),
-//         symb("+", {})({}),
-//         symb("F", { x: ["x", "q", "*"] })({...bindings, ...consts}),
-//     ],
-// };
-
 function runLanguage() {
-    // const expr = "x + y * z - a / ( a + b )";
-    // const rpn = shuntingYard(expr.split(" "));
-    // const bindings = { x: 1.0, y: -5.0, z: 0.6, a: 23.5, b: -15.8 };
-    // const res = evalRPN(rpn, bindings);
+    const consts = {
+        c: 1.0,
+        p: 0.3,
+        q: 1.0 - 0.3,
+        h: 0.3 * (1.0 - 0.3),
+    };
 
-    // console.log(expr);
-    // console.log(rpn);
-    // console.log(bindings);
-    // console.log(res);
+    const axiom = symb("F", { x: ["x"] })({ x: 1.0 });
 
-    // console.log(consts);
-    // evolve(axiom, rules, consts, 2);
 
     const rules2 = {
-        "F": parseRuleString(["x"], "F(x*p)+()F(x*h)-()-()F(x*h)+()F(x*q)"),
+        // "F": parseRuleString(["x"], "F(x*p)+()F(x*h)-()-()F(x*h)+()F(x*q)"),
+        "F": parseRuleString(["x"], "F(x*p)+F(x*h)--F(x*h)+F(x*q)"),
         // "F": parseRuleString(["x"], "F(x*p)+(x)F(x*h)-()-()F(x*h)+()F(x*q)", symbols, consts),
         // "F": parseRuleString(["x"], "F(x*p)+(x+x)F(x*h)-()-()F(x*h)+()F(x*q)", symbols, consts),
     };
