@@ -4,7 +4,7 @@
 const systems = [
     {
         angle: 90,
-        axiom: "F-F-F-F",
+        axiom: ["F", "-", "F", "-", "F", "-", "F"],
         level: 3,
         productions: {
             "F": "F-F+F+FF-F-F+F",
@@ -12,7 +12,7 @@ const systems = [
     },
     {
         angle: 90,
-        axiom: "-F",
+        axiom: ["-", "F"],
         level: 3,
         productions: {
             "F": "F+F-F-F+F",
@@ -20,7 +20,7 @@ const systems = [
     },
     {
         angle: 90,
-        axiom: "F+F+F+F",
+        axiom: ["F", "+", "F", "+", "F", "+", "F"],
         level: 2,
         productions: {
             "F": "F+f-FF+F+FF+Ff+FF-f+FF-F-FF-Ff-FFF",
@@ -29,7 +29,7 @@ const systems = [
     },
     {
         angle: 90,
-        axiom: "F-F-F-F",
+        axiom: ["F", "-", "F", "-", "F", "-", "F"],
         level: 3,
         productions: {
             "F": "FF-F+F-F-FF",
@@ -37,7 +37,7 @@ const systems = [
     },
     {
         angle: 25,
-        axiom: "F",
+        axiom: ["F"],
         level: 4,
         productions: {
             "F": "F[+F]F[-F]F",
@@ -45,7 +45,7 @@ const systems = [
     },
     {
         angle: 25,
-        axiom: "X",
+        axiom: ["X"],
         level: 6,
         productions: {
             "F": "FF",
@@ -54,7 +54,7 @@ const systems = [
     },
     {
         angle: 90,
-        axiom: "-L",
+        axiom: ["-L"],
         level: 4,
         productions: {
             "L": "LF+RFR+FL-F-LFLFL-FRFR+",
@@ -63,16 +63,17 @@ const systems = [
     },
     {
         angle: 90,
-        axiom: "L",
+        axiom: ["L"],
         level: 4,
         productions: {
+            "F": "F",
             "L": "LFRFL-F-RFLFR+F+LFRFL",
             "R": "RFLFR+F+LFRFL-F-RFLFR",
         },
     },
     {
         angle: 25,
-        axiom: "F",
+        axiom: ["F"],
         level: 2,
         productions: {
             "F": [
@@ -84,7 +85,7 @@ const systems = [
     },
     {
         angle: 60,
-        axiom: "F",
+        axiom: ["F"],
         level: 4,
         productions: {
             "F": "F+G++G-F--FF-G+",

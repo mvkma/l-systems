@@ -134,7 +134,7 @@ function symb(s, parameters) {
 
         return {
             "symbol": s,
-            "parameters": parameters,
+            //"parameters": parameters,
             "values": values,
         };
     };
@@ -151,7 +151,7 @@ function symb(s, parameters) {
  * @returns {any[]}
  */
 function evolve(axiom, rules, consts, level) {
-    let state = [axiom];
+    let state = axiom;
     let rule;
     let next;
     let n = 0;
@@ -245,32 +245,96 @@ function parseRuleString(parameters, rule) {
         }
     }
 
+    if (s !== undefined) {
+        rhs.push(symb(s, emptyParams));
+    }
+
     return function(bindings) {
         return rhs.map(f => f(bindings));
     };
 }
 
-function runLanguage() {
-    const consts = {
-        c: 1.0,
-        p: 0.3,
-        q: 1.0 - 0.3,
-        h: 0.3 * (1.0 - 0.3),
-    };
+/**
+ * @param {string} lhs
+ *
+ * @returns {Array<string>}
+ */
+function getParameters(lhs) {
+    if (lhs.length > 3) {
+        return lhs.slice(2, -1).split(",").map(s => s.trim());
+    } else {
+        return [];
+    }
+}
 
-    const axiom = symb("F", { x: ["x"] })({ x: 1.0 });
+/**
+ * @param {string} text
+ *
+ * @returns {Object<string,any>}
+ */
+function parseSystem(text) {
+    let json;
 
-    const rules2 = {
-        // "F": parseRuleString(["x"], "F(x*p)+()F(x*h)-()-()F(x*h)+()F(x*q)"),
-        "F": parseRuleString(["x"], "F(x*p)+F(x*h)--F(x*h)+F(x*q)"),
-        // "F": parseRuleString(["x"], "F(x*p)+(x)F(x*h)-()-()F(x*h)+()F(x*q)", symbols, consts),
-        // "F": parseRuleString(["x"], "F(x*p)+(x+x)F(x*h)-()-()F(x*h)+()F(x*q)", symbols, consts),
-    };
+    if (typeof text === "string") {
+        json = JSON.parse(text);
+    } else {
+        json = text;
+    }
 
-    const state = evolve(axiom, rules2, consts, 2);
-    console.log(stateToString(state));
+    const system = {};
+
+    system["angle"] = json["angle"];
+    system["level"] = json["level"];
+    system["consts"] = json["constants"] || {};
+    system["rules"] = {};
+    system["axiom"] = [];
+    system["symbols"] = new Set();
+
+    const positionMap = {};
+    let symb, params, values;
+    for (const [lhs, rhs] of Object.entries(json["productions"])) {
+        symb = lhs[0];
+        params = getParameters(lhs);
+        system["rules"][symb] = parseRuleString(params, rhs);
+        positionMap[symb] = params;
+        system["symbols"].add(symb);
+        system["symbols"] = system["symbols"].union(new Set(rhs));
+    }
+
+    for (const s of json["axiom"]) {
+        symb = s[0];
+        values = getParameters(s);
+        params = positionMap[symb];
+        system["axiom"].push({ symbol: symb, values: {} });
+
+        if (values.length === 0) {
+            continue;
+        }
+
+        if (params !== undefined) {
+            for (let i = 0; i < params.length; i++) {
+                system["axiom"]["values"][params[i]] = values[i];
+            }
+        } else {
+            switch (symb) {
+            case "F":
+            case "f":
+                system["axiom"]["values"]["s"] = values[0];
+                break;
+            case "+":
+            case "-":
+                system["axiom"]["values"]["a"] = values[0];
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    return system;
 }
 
 export {
-    runLanguage,
+    evolve,
+    parseSystem,
 };

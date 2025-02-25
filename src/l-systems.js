@@ -7,10 +7,9 @@ import {
 } from "./components.js";
 
 import {
-    runLanguage
+    evolve,
+    parseSystem,
 } from "./language.js";
-
-window.runLanguage = runLanguage;
 
 /**
  * @type {CanvasRenderingContext2D}
@@ -121,7 +120,7 @@ function *generator(axiom, productions, n) {
 function centerTransform(initialTurtle) {
     const stack = [];
     let turtle = new Float32Array([...initialTurtle["position"], ...initialTurtle["heading"]]);
-    const step = initialTurtle["step"];
+    let step, angle;
 
     const rotPos = rotationMatrix(initialTurtle["angle"]);
     const rotNeg = rotationMatrix(-initialTurtle["angle"]);
@@ -132,8 +131,9 @@ function centerTransform(initialTurtle) {
     const bounds = new Float32Array([turtle[0], turtle[0], turtle[1], turtle[1]]);
 
     for (const c of state) {
-        switch (c) {
+        switch (c["symbol"]) {
         case "f":
+            step = c["values"]["s"] || initialTurtle["step"];
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
             bounds[0] = Math.min(bounds[0], turtle[0]);
@@ -143,8 +143,13 @@ function centerTransform(initialTurtle) {
             break;
         case "+":
         case "-":
+            angle = c["values"]["a"];
+            if (angle === undefined) {
+                mat = c["symbol"] === "+" ? rotPos : rotNeg;
+            } else {
+                mat = c["symbol"] === "+" ? rotationMatrix(angle) : rotationMatrix(-angle);
+            }
             cur = turtle.slice(2, 4);
-            mat = c === "+" ? rotPos : rotNeg;
             turtle[2] = cur[0] * mat[0][0] + cur[1] * mat[0][1];
             turtle[3] = cur[0] * mat[1][0] + cur[1] * mat[1][1];
             break;
@@ -156,11 +161,13 @@ function centerTransform(initialTurtle) {
             break;
         default:
             if (prev !== c) {
-                draw = (linestyles[c] && linestyles[c]["draw"]) || false;
+                draw = (linestyles[c["symbol"]] && linestyles[c["symbol"]]["draw"]) || false;
                 if (!draw) {
                     break;
                 }
+                prev = c;
             }
+            step = c["values"]["s"] || initialTurtle["step"];
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
             bounds[0] = Math.min(bounds[0], turtle[0]);
@@ -198,7 +205,7 @@ function plot(depth) {
 
     for (const c of state) {
         ctx1.fillStyle = "yellow";
-        switch (c) {
+        switch (c["symbol"]) {
         case "F":
             ctx1.fillStyle = "lightblue";
             break;
@@ -245,7 +252,8 @@ function draw(initialTurtle, drawingParams = {}) {
         initialTurtle["heading"][0],
         initialTurtle["heading"][1],
     ]);
-    const step = initialTurtle["step"] / r;
+    // const step = initialTurtle["step"] / r;
+    let step, angle;
 
     const rotPos = rotationMatrix(initialTurtle["angle"]);
     const rotNeg = rotationMatrix(-initialTurtle["angle"]);
@@ -263,16 +271,22 @@ function draw(initialTurtle, drawingParams = {}) {
     ctx0.moveTo(...turtle);
 
     const drawingStep = function (c) {
-        switch (c) {
+        switch (c["symbol"]) {
         case "f":
+            step = (c["values"]["s"] || initialTurtle["step"]) / r;
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
             ctx0.moveTo(...turtle);
             break;
         case "+":
         case "-":
+            angle = c["values"]["a"];
+            if (angle === undefined) {
+                mat = c["symbol"] === "+" ? rotPos : rotNeg;
+            } else {
+                mat = c["symbol"] === "+" ? rotationMatrix(angle) : rotationMatrix(-angle);
+            }
             cur = turtle.slice(2, 4);
-            mat = c === "+" ? rotPos : rotNeg;
             turtle[2] = cur[0] * mat[0][0] + cur[1] * mat[0][1];
             turtle[3] = cur[0] * mat[1][0] + cur[1] * mat[1][1];
             break;
@@ -285,21 +299,23 @@ function draw(initialTurtle, drawingParams = {}) {
             break;
         default:
             if (prev !== c) {
-                draw = (linestyles[c] && linestyles[c]["draw"]) || false;
+                const symb = c["symbol"];
+                draw = (linestyles[symb] && linestyles[symb]["draw"]) || false;
                 if (!draw) {
                     break;
                 }
                 ctx0.stroke();
                 ctx0.beginPath();
                 ctx0.moveTo(...turtle);
-                ctx0.lineWidth = linestyles[c]["width"];
-                ctx0.strokeStyle = linestyles[c]["color"];
-                ctx0.shadowOffsetX = linestyles[c]["shadowOffsetX"];
-                ctx0.shadowOffsetY = linestyles[c]["shadowOffsetY"];
-                ctx0.shadowBlur = linestyles[c]["shadowBlur"];
-                ctx0.shadowColor = linestyles[c]["shadowColor"];
+                ctx0.lineWidth = linestyles[symb]["width"];
+                ctx0.strokeStyle = linestyles[symb]["color"];
+                ctx0.shadowOffsetX = linestyles[symb]["shadowOffsetX"];
+                ctx0.shadowOffsetY = linestyles[symb]["shadowOffsetY"];
+                ctx0.shadowBlur = linestyles[symb]["shadowBlur"];
+                ctx0.shadowColor = linestyles[symb]["shadowColor"];
                 prev = c;
             }
+            step = (c["values"]["s"] || initialTurtle["step"]) / r;
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
             ctx0.lineTo(...turtle);
@@ -341,24 +357,6 @@ function draw(initialTurtle, drawingParams = {}) {
 }
 
 /**
- * Evolve the L-system by one step
- *
- * @param {Object} productions
- */
-function evolve(productions) {
-    let replacement;
-    let next = "";
-    for (const c of state) {
-        replacement = productions[c] || c;
-        if (replacement.constructor === Array) {
-            replacement = replacement[randint() % replacement.length];
-        }
-        next = next + replacement;
-    }
-    state = next;
-}
-
-/**
  * Count symbols and calculate stack depth
  *
  * @returns {Object}
@@ -367,14 +365,16 @@ function statistics() {
     const counts = {};
     let cur = 1;
     let depth = 1;
+    let symb;
 
     for (const c of state) {
-        counts[c] = counts[c] + 1 || 0;
+        symb = c["symbol"];
+        counts[symb] = counts[symb] + 1 || 0;
 
-        if (c === "[") {
+        if (symb === "[") {
             cur += 1;
             depth = Math.max(depth, cur);
-        } else if (c === "]") {
+        } else if (symb === "]") {
             cur -= 1;
         } else {
             continue;
@@ -440,10 +440,13 @@ function run(system, level, drawingParams = {}) {
 
     let n = 0;
     t0 = performance.now();
-    while (n < level) {
-        evolve(system["productions"]);
-        n++;
-    }
+    // while (n < level) {
+    //     evolve(system["productions"]);
+    //     n++;
+    // }
+    console.log(state);
+    state = evolve(system["axiom"], system["rules"], system["consts"], system["level"]);
+    console.log(state);
     stats["evolve"] = performance.now() - t0;
 
     stats = {...stats, ...statistics()};
@@ -478,16 +481,12 @@ function lfsr(seed) {
 /**
  * Extract symbols from production rules
  *
- * @param {Object} productions
+ * @param {Object} sytsem
  *
  * @returns {Array}
  */
-function extractSymbols(productions) {
-    let symbols = new Set(Object.keys(productions));
-
-    for (const rule of Object.values(productions)) {
-        symbols = symbols.union(new Set(rule));
-    }
+function extractSymbols(system) {
+    let symbols = system["symbols"];
 
     return (new Array(...symbols)).filter(
         k => k.length === 1 && k.codePointAt(0) >= 65 && k.codePointAt(0) <= 90
@@ -507,7 +506,7 @@ function updateLinestyleInput(system) {
         symbolSelect.removeChild(symbolSelect.firstChild);
     }
 
-    const symbols = extractSymbols(system["productions"]);
+    const symbols = extractSymbols(system);
     for (const s of symbols) {
         const option = document.createElement("option");
         option.value = s;
@@ -535,7 +534,7 @@ window.onload = function(ev) {
 
     systemInput.addEventListener("blur", function(ev) {
         try {
-            system = JSON.parse(ev.target.value);
+            system = parseSystem(ev.target.value);
         } catch (error) {
             return;
         }
@@ -544,13 +543,15 @@ window.onload = function(ev) {
     });
 
     systemSelect.addEventListener("input", function(ev) {
-        system = systems[ev.target.selectedIndex];
-        systemInput.value = JSON.stringify(system, undefined, 2);
+        system = parseSystem(systems[ev.target.selectedIndex]);
+        systemInput.value = JSON.stringify(systems[systemSelect.selectedIndex], undefined, 2);
         updateLinestyleInput(system);
     });
     systemInput.value = JSON.stringify(systems[systemSelect.selectedIndex], undefined, 2);
-    system = systems[systemSelect.selectedIndex];
+    system = parseSystem(systems[systemSelect.selectedIndex]);
     updateLinestyleInput(system);
+
+    console.log(system);
 
     const symbolSelect = document.querySelector("#symbol-select");
     const linestyleInput = document.querySelector("#linestyle-input");
@@ -579,7 +580,7 @@ window.onload = function(ev) {
 
     const animateCallback = function() {
         if (system === undefined || state === null) {
-            system = JSON.parse(systemInput.value);
+            system = parseSystem(systemInput.value);
             run(system, system["level"]);
         }
 
@@ -614,7 +615,7 @@ window.onload = function(ev) {
                 window.cancelAnimationFrame(frame);
             }
 
-            system = JSON.parse(systemInput.value);
+            system = parseSystem(systemInput.value);
             run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
             ev.preventDefault();
             break;
@@ -644,7 +645,7 @@ window.onload = function(ev) {
             return ;
         }
 
-        system = system || JSON.parse(systemInput.value);
+        system = system || parseSystem(systemInput.value);
         drawingParameters["zoom"] += ev.deltaY < 0 ? 0.1 : -0.1;
 
         if (!animate) {
