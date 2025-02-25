@@ -39,13 +39,19 @@ function evalRPN(tokens, bindings) {
         op = operators[t];
 
         if (op === undefined) {
-            val = bindings[t];
+            if (t[0] >= "a" && t[0] <= "z") {
+                val = bindings[t];
 
-            if (val === undefined) {
-                throw new Error(`Missing binding for variable '${t}'`);
+                if (val === undefined) {
+                    throw new Error(`Missing binding for variable '${t}'`);
+                }
             } else {
-                stack.push(val);
+                val = parseFloat(t);
+                if (isNaN(val)) {
+                    throw new Error(`Invalid number '${t}'`);
+                }
             }
+            stack.push(val);
         } else {
             args = [];
             for (let i = 0; i < op.args; i++) {
@@ -253,7 +259,6 @@ function runLanguage() {
     };
 
     const axiom = symb("F", { x: ["x"] })({ x: 1.0 });
-
 
     const rules2 = {
         // "F": parseRuleString(["x"], "F(x*p)+()F(x*h)-()-()F(x*h)+()F(x*q)"),
