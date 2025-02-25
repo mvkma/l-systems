@@ -198,7 +198,7 @@ function stateToString(state) {
 /**
  * Parse rule string into function that evaluates it (with some parameters)
  *
- * @param {Array<string>} parameters
+ * @param {Object<string,Array<string>>} parameters
  * @param {string} rule
  *
  * @returns {(bindings: any) => any[]}
@@ -206,8 +206,11 @@ function stateToString(state) {
 function parseRuleString(parameters, rule) {
     const rhs = [];
     const emptyParams = {};
-    for (const c of parameters) {
-        emptyParams[c] = [];
+    for (const [s, params] of Object.entries(parameters)) {
+        emptyParams[s] = {};
+        for (const c of params) {
+            emptyParams[s][c] = [];
+        }
     }
 
     let i, j, k, s;
@@ -223,7 +226,7 @@ function parseRuleString(parameters, rule) {
                     // dirty tokenization
                     const param = rule.slice(i, j + 1).replace(/([\(\)*+\/-])/g, " $1 ");
                     const rpn = shuntingYard(param.split(" ").filter(t => t.length > 0));
-                    params[parameters[k]] = rpn;
+                    params[parameters[s][k]] = rpn;
                     k++;
                 }
 
@@ -238,7 +241,7 @@ function parseRuleString(parameters, rule) {
             s = undefined;
         } else {
             if (s !== undefined) {
-                rhs.push(symb(s, emptyParams));
+                rhs.push(symb(s, emptyParams[s] || {}));
             }
             s = rule[i];
             i++;
@@ -246,7 +249,7 @@ function parseRuleString(parameters, rule) {
     }
 
     if (s !== undefined) {
-        rhs.push(symb(s, emptyParams));
+        rhs.push(symb(s, emptyParams[s] || {}));
     }
 
     return function(bindings) {
@@ -290,13 +293,18 @@ function parseSystem(text) {
     system["axiom"] = [];
     system["symbols"] = new Set();
 
-    const positionMap = {};
+    const positionMap = {
+        "+": ["a"],
+        "-": ["a"],
+    };
+    for (const lhs of Object.keys(json["productions"])) {
+        positionMap[lhs[0]] = getParameters(lhs);
+    }
+
     let symb, params, values;
     for (const [lhs, rhs] of Object.entries(json["productions"])) {
         symb = lhs[0];
-        params = getParameters(lhs);
-        system["rules"][symb] = parseRuleString(params, rhs);
-        positionMap[symb] = params;
+        system["rules"][symb] = parseRuleString(positionMap, rhs);
         system["symbols"].add(symb);
         system["symbols"] = system["symbols"].union(new Set(rhs));
     }

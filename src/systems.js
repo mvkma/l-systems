@@ -107,6 +107,18 @@ const systems = [
             h: Math.pow(0.3 * 0.7, 0.5),
         },
     },
+    {
+        angle: 85,
+        axiom: ["A(1.0)"],
+        level: 5,
+        productions: {
+            "F(s)": "F(s)",
+            "A(s)": "F(s)[+A(s/r)][-A(s/r)]",
+        },
+        consts: {
+            r: 1.456,
+        },
+    },
 ];
 
 export {
