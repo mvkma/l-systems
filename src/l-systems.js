@@ -147,6 +147,7 @@ function centerTransform(initialTurtle) {
             if (angle === undefined) {
                 mat = c["symbol"] === "+" ? rotPos : rotNeg;
             } else {
+                angle = angle / 180 * Math.PI;
                 mat = c["symbol"] === "+" ? rotationMatrix(angle) : rotationMatrix(-angle);
             }
             cur = turtle.slice(2, 4);
@@ -284,6 +285,7 @@ function draw(initialTurtle, drawingParams = {}) {
             if (angle === undefined) {
                 mat = c["symbol"] === "+" ? rotPos : rotNeg;
             } else {
+                angle = angle / 180 * Math.PI;
                 mat = c["symbol"] === "+" ? rotationMatrix(angle) : rotationMatrix(-angle);
             }
             cur = turtle.slice(2, 4);

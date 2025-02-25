@@ -285,7 +285,7 @@ function parseSystem(text) {
 
     system["angle"] = json["angle"];
     system["level"] = json["level"];
-    system["consts"] = json["constants"] || {};
+    system["consts"] = json["consts"] || {};
     system["rules"] = {};
     system["axiom"] = [];
     system["symbols"] = new Set();
@@ -313,17 +313,17 @@ function parseSystem(text) {
 
         if (params !== undefined) {
             for (let i = 0; i < params.length; i++) {
-                system["axiom"]["values"][params[i]] = values[i];
+                system["axiom"][system["axiom"].length - 1]["values"][params[i]] = parseFloat(values[i]);
             }
         } else {
             switch (symb) {
             case "F":
             case "f":
-                system["axiom"]["values"]["s"] = values[0];
+                system["axiom"][system["axiom"].length - 1]["values"]["s"] = parseFloat(values[0]);
                 break;
             case "+":
             case "-":
-                system["axiom"]["values"]["a"] = values[0];
+                system["axiom"][system["axiom"].length - 1]["values"]["a"] = parseFloat(values[0]);
                 break;
             default:
                 break;

@@ -54,9 +54,10 @@ const systems = [
     },
     {
         angle: 90,
-        axiom: ["-L"],
+        axiom: ["-", "L"],
         level: 4,
         productions: {
+            "F": "F",
             "L": "LF+RFR+FL-F-LFLFL-FRFR+",
             "R": "-LFLF+RFRFR+F+RF-LFL-FR",
         },
@@ -90,6 +91,20 @@ const systems = [
         productions: {
             "F": "F+G++G-F--FF-G+",
             "G": "-F+GG++G+F--F-G",
+        },
+    },
+    {
+        angle: 86,
+        axiom: ["-(90)", "F(1.0)"],
+        level: 6,
+        productions: {
+            "F(s)": "F(s*p)+F(s*h)--F(s*h)+F(s*q)",
+        },
+        consts: {
+            c: 1.0,
+            p: 0.3,
+            q: 0.7,
+            h: Math.pow(0.3 * 0.7, 0.5),
         },
     },
 ];
