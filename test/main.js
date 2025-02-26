@@ -137,3 +137,33 @@ test.test(() => {
     test.assertEquals(JSON.stringify(ruleAresult[5]), '{"symbol":"]","values":{}}');
     test.assertEquals(JSON.stringify(ruleAresult[6]), '{"symbol":"-","values":{"a":45}}');
 }, "Parse system - complicated");
+
+test.test(() => {
+    const input = {
+        angle: 80,
+        level: 2,
+        consts: { r: 0.5 },
+        axiom: ["-", "F(1.0)"],
+        productions: {
+            "F(s)": "F(s+r)+F(s*2.0)",
+        },
+    };
+    const system = language.parseSystem(input);
+
+    const state = language.evolve(
+        system["axiom"],
+        system["rules"],
+        system["consts"],
+        system["level"]
+    );
+
+    test.assertEquals(state.length, 8);
+    test.assertEquals(JSON.stringify(state[0]), '{"symbol":"-","values":{}}');
+    test.assertEquals(JSON.stringify(state[1]), '{"symbol":"F","values":{"s":2}}');
+    test.assertEquals(JSON.stringify(state[2]), '{"symbol":"+","values":{}}');
+    test.assertEquals(JSON.stringify(state[3]), '{"symbol":"F","values":{"s":3}}');
+    test.assertEquals(JSON.stringify(state[4]), '{"symbol":"+","values":{}}');
+    test.assertEquals(JSON.stringify(state[5]), '{"symbol":"F","values":{"s":2.5}}');
+    test.assertEquals(JSON.stringify(state[6]), '{"symbol":"+","values":{}}');
+    test.assertEquals(JSON.stringify(state[7]), '{"symbol":"F","values":{"s":4}}');
+}, "System evolution");
