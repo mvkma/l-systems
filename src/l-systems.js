@@ -242,7 +242,7 @@ function plot(depth) {
 function draw(initialTurtle, drawingParams = {}) {
     const stack = [];
     const animate = drawingParams["animate"] || false;
-    const interval = drawingParams["interval"] || 20;
+    const interval = drawingParams["interval"] || 2;
     const zoom = drawingParams["zoom"] || 1.0;
 
     const [r, deltax, deltay] = centerTransform(initialTurtle);

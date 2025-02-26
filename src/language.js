@@ -345,4 +345,6 @@ function parseSystem(text) {
 export {
     evolve,
     parseSystem,
+    evalRPN,
+    shuntingYard,
 };
