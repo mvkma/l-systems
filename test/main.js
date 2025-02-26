@@ -111,7 +111,6 @@ test.test(() => {
     };
 
     const system = language.parseSystem(input);
-    console.log(system);
 
     test.assertEquals(system["angle"], 80);
     test.assertEquals(system["level"], 10);
