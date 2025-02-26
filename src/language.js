@@ -224,10 +224,11 @@ function parseRuleString(parameters, rule) {
             while (true) {
                 if (rule[j] === "," || rule[j] === ")") {
                     // dirty tokenization
-                    const param = rule.slice(i, j + 1).replace(/([\(\)*+\/-])/g, " $1 ");
+                    const param = rule.slice(i + 1, j).replace(/([\(\)*+\/-])/g, " $1 ");
                     const rpn = shuntingYard(param.split(" ").filter(t => t.length > 0));
                     params[parameters[s][k]] = rpn;
                     k++;
+                    i = j;
                 }
 
                 if (rule[j] === ")") {
