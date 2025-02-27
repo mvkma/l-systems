@@ -2,6 +2,8 @@ import * as test from "./test.js";
 
 import * as language from "../src/language.js";
 
+import * as random from "../src/random.js";
+
 /* Language */
 test.init();
 
@@ -166,3 +168,8 @@ test.test(() => {
     test.assertEquals(JSON.stringify(state[6]), '{"symbol":"+","values":{}}');
     test.assertEquals(JSON.stringify(state[7]), '{"symbol":"F","values":{"s":4}}');
 }, "System evolution");
+
+test.test(() => {
+    random.init(21);
+    test.assertEquals(random.randint(), 16389);
+}, "Random");

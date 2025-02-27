@@ -27,18 +27,7 @@ let ctx1 = null;
 let state = null;
 
 /**
- * @type {Uint16Array}
- *
- */
-let random = null;
-
-/**
- * @type {function}
- */
-let randint = null;
-
-/**
- * @type {Object}{
+ * @type {Object}
  */
 const defaultLineStyle = {
     draw: false,
@@ -52,7 +41,7 @@ const defaultLineStyle = {
 };
 
 /**
- * @type {Object}
+ * @type {Object<string,any>}
  */
 let linestyles = {
     "F": {
@@ -65,22 +54,6 @@ let linestyles = {
         shadowBlur: 0.0,
         shadowColor: "rgb(0 0 0 / 0%)",
     }
-}
-
-/**
- * Matrix vector multiplication
- *
- * @param {Object} M
- * @param {Object} v
- *
- * @return {Object}
- */
-function mulMatVec(M, v) {
-
-    return [
-        v[0] * M[0][0] + v[1] * M[0][1],
-        v[0] * M[1][0] + v[1] * M[1][1],
-    ];
 }
 
 /**
@@ -440,15 +413,8 @@ function run(system, level, drawingParams = {}) {
     let stats = {};
     let t0;
 
-    let n = 0;
     t0 = performance.now();
-    // while (n < level) {
-    //     evolve(system["productions"]);
-    //     n++;
-    // }
-    console.log(state);
     state = evolve(system["axiom"], system["rules"], system["consts"], system["level"]);
-    console.log(state);
     stats["evolve"] = performance.now() - t0;
 
     stats = {...stats, ...statistics()};
@@ -465,20 +431,6 @@ function run(system, level, drawingParams = {}) {
 
     show(stats);
 }
-
-/**
- * Linear feedback shift register
- *
- * @param {number} seed
- */
-function lfsr(seed) {
-    const start = seed;
-    let lfsr = start;
-    return () => {
-        lfsr = (lfsr >> 1) | (((lfsr ^ (lfsr >> 1) ^ (lfsr >> 3) ^ (lfsr >> 12)) & 1) << 15)
-        return lfsr;
-    };
-};
 
 /**
  * Extract symbols from production rules
@@ -660,18 +612,4 @@ window.onload = function(ev) {
         }
         ev.preventDefault();
     });
-
-    const period = (1 << 16) - 1;
-    const gen = lfsr(Math.floor(Math.random() * period));
-    random = new Uint16Array(period);
-    for (let i = 0; i < period; i++) {
-        random[i] = gen();
-    }
-
-    let i = 0;
-    randint = function() {
-        i += 1;
-        i %= period;
-        return random[i];
-    }
 }
