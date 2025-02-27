@@ -3,6 +3,7 @@ import {
 } from "./systems.js";
 
 import {
+    KeyValueInput,
     NumberInput
 } from "./components.js";
 
@@ -427,8 +428,6 @@ function run(system, level, drawingParams = {}) {
     draw(turtle, drawingParams);
     stats["turtle"] = performance.now() - t0;
 
-    console.log(statistics);
-
     show(stats);
 }
 
@@ -474,7 +473,52 @@ function updateLinestyleInput(system) {
     symbolSelect.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+/**
+ * Update the input fields for the system
+ *
+ * @param {Object<string,any>} system - unparsed system
+ */
+function updateSystemInput(system) {
+    document.querySelector("#system-input-angle").setValue(system["angle"]);
+    document.querySelector("#system-input-level").setValue(system["level"]);
+
+    document.querySelector("#system-input-axiom").value = system["axiom"].join(" ");
+
+    const rulesInput = document.querySelector("#system-input-rules");
+    rulesInput.setData(system["productions"]);
+
+    const constsInput = document.querySelector("#system-input-consts")
+    constsInput.setData(system["consts"] || {});
+
+    rulesInput.render();
+    constsInput.render();
+}
+
+/**
+ * Read system inputs from UI
+ *
+ * @returns {Object<string,any>}
+ */
+function getSystemInput() {
+    const system = [];
+
+    system["angle"] = document.querySelector("#system-input-angle").getValue();
+    system["level"] = document.querySelector("#system-input-level").getValue();
+
+    system["axiom"] = document.querySelector("#system-input-axiom").value.
+        split(" ").
+        filter(s => s.length > 0);
+    system["productions"] = document.querySelector("#system-input-rules").getData();
+    system["consts"] = document.querySelector("#system-input-consts").getData();
+
+    console.log(system);
+
+    return system;
+}
+
 customElements.define("number-input", NumberInput, { extends: "input" });
+
+customElements.define("key-value-input", KeyValueInput);
 
 window.onload = function(ev) {
     ctx0 = document.querySelector("#canvas0").getContext("2d");
@@ -483,29 +527,16 @@ window.onload = function(ev) {
     let system = undefined;
 
     const systemSelect = document.querySelector("#system-select");
-    const systemInput = document.querySelector("#system-input");
     systemSelect.selectedIndex = 0;
-
-    systemInput.addEventListener("blur", function(ev) {
-        try {
-            system = parseSystem(ev.target.value);
-        } catch (error) {
-            return;
-        }
-
-        updateLinestyleInput(system);
-    });
 
     systemSelect.addEventListener("input", function(ev) {
         system = parseSystem(systems[ev.target.selectedIndex]);
-        systemInput.value = JSON.stringify(systems[systemSelect.selectedIndex], undefined, 2);
+        updateSystemInput(systems[systemSelect.selectedIndex]);
         updateLinestyleInput(system);
     });
-    systemInput.value = JSON.stringify(systems[systemSelect.selectedIndex], undefined, 2);
+    updateSystemInput(systems[systemSelect.selectedIndex]);
     system = parseSystem(systems[systemSelect.selectedIndex]);
     updateLinestyleInput(system);
-
-    console.log(system);
 
     const symbolSelect = document.querySelector("#symbol-select");
     const linestyleInput = document.querySelector("#linestyle-input");
@@ -534,7 +565,7 @@ window.onload = function(ev) {
 
     const animateCallback = function() {
         if (system === undefined || state === null) {
-            system = parseSystem(systemInput.value);
+            system = parseSystem(getSystemInput());
             run(system, system["level"]);
         }
 
@@ -569,8 +600,9 @@ window.onload = function(ev) {
                 window.cancelAnimationFrame(frame);
             }
 
-            system = parseSystem(systemInput.value);
+            system = parseSystem(getSystemInput());
             run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
+            updateLinestyleInput(system);
             ev.preventDefault();
             break;
         case " ":
@@ -599,7 +631,7 @@ window.onload = function(ev) {
             return ;
         }
 
-        system = system || parseSystem(systemInput.value);
+        system = system || parseSystem(getSystemInput());
         drawingParameters["zoom"] += ev.deltaY < 0 ? 0.1 : -0.1;
 
         if (!animate) {

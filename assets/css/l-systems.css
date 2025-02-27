@@ -46,7 +46,7 @@
 
 input[type=""], select {
     text-align: right;
-    width: 120px;
+    width: 200px;
     background: var(--src-bg-color);
     color: var(--src-fg-color);
 }
@@ -100,4 +100,22 @@ dd {
 textarea {
     width: 100%;
     resize: vertical;
+}
+
+.kv-entry {
+    display: flex;
+}
+
+.kv-button-remove {
+    width: 2em;
+}
+
+.kv-input-key {
+    text-align: left !important;
+    width: 4em !important;
+}
+
+.kv-input-value {
+    text-align: left !important;
+    width: 100% !important;
 }

@@ -36,7 +36,24 @@
           </select>
         </div>
         <div class="param-row">
-          <textarea rows="10" id="system-input"></textarea>
+          <label for="system-input-angle">Angle:</label>
+          <input is="number-input" type="" id="system-input-angle" step="1" maxlength="3">
+        </div>
+        <div class="param-row">
+          <label for="system-input-level">Level:</label>
+          <input is="number-input" type="" id="system-input-level" step="1" maxlength="3">
+        </div>
+        <div class="param-row">
+          <label for="system-input-axiom">Axiom:</label>
+          <input type="" id="system-input-axiom">
+        </div>
+        <div class="param-row">
+          <label>Productions:</label>
+          <key-value-input id="system-input-rules"></key-value-input>
+        </div>
+        <div class="param-row">
+          <label>Constants:</label>
+          <key-value-input id="system-input-consts"></key-value-input>
         </div>
       </div>
       <div class="column-group" id="view-controls">
