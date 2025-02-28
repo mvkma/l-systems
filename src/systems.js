@@ -3,6 +3,23 @@
  */
 const systems = [
     {
+        angle: 25,
+        axiom: ["F"],
+        level: 4,
+        productions: {
+            "F": "F[+F]F[-F]F",
+        },
+    },
+    {
+        angle: 25,
+        axiom: ["X"],
+        level: 6,
+        productions: {
+            "F": "FF",
+            "X": "F[+X][-X]FX",
+        },
+    },
+    {
         angle: 90,
         axiom: ["F", "-", "F", "-", "F", "-", "F"],
         level: 3,
@@ -34,23 +51,6 @@ const systems = [
         productions: {
             "F": "FF-F+F-F-FF",
         }
-    },
-    {
-        angle: 25,
-        axiom: ["F"],
-        level: 4,
-        productions: {
-            "F": "F[+F]F[-F]F",
-        },
-    },
-    {
-        angle: 25,
-        axiom: ["X"],
-        level: 6,
-        productions: {
-            "F": "FF",
-            "X": "F[+X][-X]FX",
-        },
     },
     {
         angle: 90,
