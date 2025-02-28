@@ -17,7 +17,7 @@
     <canvas id="canvas0" width="800" height="600"></canvas>
     <canvas id="canvas1" width="800" height="100"></canvas>
     <div class="column-group-container">
-      <div class="column-group" id="simulation-rules">
+      <div class="column-group">
         <div class="param-row">
           <label for="system-select">System:</label>
           <select id="system-select">
@@ -35,6 +35,16 @@
             <option>Parametric (ABP 1.39)</option>
           </select>
         </div>
+      </div>
+      <div class="column-group">
+        <div class="param-row">
+          <label for="symbol-select">Symbol:</label>
+          <select id="symbol-select"></select>
+        </div>
+      </div>
+    </div>
+    <div class="column-group-container">
+      <div class="column-group" id="simulation-rules">
         <div class="param-row">
           <label for="system-input-angle">Angle:</label>
           <input is="number-input" type="" id="system-input-angle" step="1" maxlength="3">
@@ -57,10 +67,6 @@
         </div>
       </div>
       <div class="column-group" id="view-controls">
-        <div class="param-row">
-          <label for="symbol-select">Symbol</label>
-          <select id="symbol-select"></select>
-        </div>
         <div class="param-row">
           <label for="style-input-draw">Draw:</label>
           <input type="checkbox" id="style-input-draw">

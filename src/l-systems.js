@@ -13,6 +13,14 @@ import {
     parseSystem,
 } from "./language.js";
 
+import {
+    getLinestyleInput,
+    getSystemInput,
+    updateLinestyleInput,
+    updateLinestyleSelect,
+    updateSystemInput,
+} from "./ui.js";
+
 /**
  * @type {CanvasRenderingContext2D}
  */
@@ -27,20 +35,6 @@ let ctx1 = null;
  * @type {string}
  */
 let state = null;
-
-/**
- * @type {Object}
- */
-const defaultLineStyle = {
-    draw: false,
-    width: 1.0,
-    color: "rgb(255 0 0 / 100%)",
-    scale: 1.0,
-    shadowOffsetX: 0.0,
-    shadowOffsetY: 0.0,
-    shadowBlur: 0.0,
-    shadowColor: "rgb(0 0 0 / 0%)",
-};
 
 /**
  * @type {Object<string,any>}
@@ -432,132 +426,6 @@ function run(system, level, drawingParams = {}) {
     show(stats);
 }
 
-/**
- * Extract symbols from production rules
- *
- * @param {Object} sytsem
- *
- * @returns {Array}
- */
-function extractSymbols(system) {
-    let symbols = system["symbols"];
-
-    return (new Array(...symbols)).filter(
-        k => k.length === 1 && k.codePointAt(0) >= 65 && k.codePointAt(0) <= 90
-    ).sort();
-}
-
-/**
- * Update linestyle select
- *
- * @param {Object} system
- */
-function updateLinestyleSelect(system) {
-    const symbolSelect = document.querySelector("#symbol-select");
-    const prevSelected = symbolSelect.value;
-
-    symbolSelect.selectedIndex = 0;
-    while (symbolSelect.firstChild) {
-        symbolSelect.removeChild(symbolSelect.firstChild);
-    }
-
-    const symbols = extractSymbols(system);
-    for (const s of symbols) {
-        const option = document.createElement("option");
-        option.value = s;
-        option.textContent = s;
-        symbolSelect.appendChild(option);
-        if (linestyles[s] === undefined) {
-            linestyles[s] = {...defaultLineStyle};
-        }
-    }
-    const selectedIndex = symbols.indexOf(prevSelected);
-    symbolSelect.selectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
-
-    symbolSelect.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
-function updateLinestyleInput() {
-    const inputDraw = document.querySelector("#style-input-draw");
-    const inputWidth = document.querySelector("#style-input-width");
-    const inputScale = document.querySelector("#style-input-scale");
-    const inputColor = document.querySelector("#style-input-color");
-    const inputShadowOffsetX = document.querySelector("#style-input-shadow-offset-x");
-    const inputShadowOffsetY = document.querySelector("#style-input-shadow-offset-y");
-    const inputShadowBlur = document.querySelector("#style-input-shadow-blur");
-    const inputShadowColor = document.querySelector("#style-input-shadow-color");
-
-    const linestyle = linestyles[document.querySelector("#symbol-select").value];
-    inputDraw.checked = linestyle["draw"];
-    inputWidth.setValue(linestyle["width"]);
-    inputScale.setValue(linestyle["scale"]);
-    inputColor.setRgba(linestyle["color"]);
-    inputShadowOffsetX.setValue(linestyle["shadowOffsetX"]);
-    inputShadowOffsetY.setValue(linestyle["shadowOffsetY"]);
-    inputShadowBlur.setValue(linestyle["shadowBlur"]);
-    inputShadowColor.setRgba(linestyle["shadowColor"]);
-}
-
-function getLinestyleInput() {
-    const style = {};
-
-    style["draw"] = document.querySelector("#style-input-draw").checked;
-    style["width"] = document.querySelector("#style-input-width").getValue();
-    style["scale"] = document.querySelector("#style-input-scale").getValue();
-    style["color"] = document.querySelector("#style-input-color").getRgba();
-    style["shadowOffsetX"] = document.querySelector("#style-input-shadow-offset-x").getValue();
-    style["shadowOffsetY"] = document.querySelector("#style-input-shadow-offset-y").getValue();
-    style["shadowBlur"] = document.querySelector("#style-input-shadow-blur").getValue();
-    style["shadowColor"] = document.querySelector("#style-input-shadow-color").getRgba();
-
-    console.log('getLinestyleInput');
-    console.log(style);
-    return style;
-}
-
-/**
- * Update the input fields for the system
- *
- * @param {Object<string,any>} system - unparsed system
- */
-function updateSystemInput(system) {
-    document.querySelector("#system-input-angle").setValue(system["angle"]);
-    document.querySelector("#system-input-level").setValue(system["level"]);
-
-    document.querySelector("#system-input-axiom").value = system["axiom"].join(" ");
-
-    const rulesInput = document.querySelector("#system-input-rules");
-    rulesInput.setData(system["productions"]);
-
-    const constsInput = document.querySelector("#system-input-consts")
-    constsInput.setData(system["consts"] || {});
-
-    rulesInput.render();
-    constsInput.render();
-}
-
-/**
- * Read system inputs from UI
- *
- * @returns {Object<string,any>}
- */
-function getSystemInput() {
-    const system = [];
-
-    system["angle"] = document.querySelector("#system-input-angle").getValue();
-    system["level"] = document.querySelector("#system-input-level").getValue();
-
-    system["axiom"] = document.querySelector("#system-input-axiom").value.
-        split(" ").
-        filter(s => s.length > 0);
-    system["productions"] = document.querySelector("#system-input-rules").getData();
-    system["consts"] = document.querySelector("#system-input-consts").getData();
-
-    console.log(system);
-
-    return system;
-}
-
 customElements.define("number-input", NumberInput, { extends: "input" });
 
 customElements.define("key-value-input", KeyValueInput);
@@ -576,22 +444,21 @@ window.onload = function(ev) {
     systemSelect.addEventListener("input", function(ev) {
         system = parseSystem(systems[ev.target.selectedIndex]);
         updateSystemInput(systems[systemSelect.selectedIndex]);
-        updateLinestyleSelect(system);
+        updateLinestyleSelect(system, linestyles);
     });
     updateSystemInput(systems[systemSelect.selectedIndex]);
     system = parseSystem(systems[systemSelect.selectedIndex]);
-    updateLinestyleSelect(system);
+    updateLinestyleSelect(system, linestyles);
 
     const symbolSelect = document.querySelector("#symbol-select");
 
     symbolSelect.addEventListener("input", function(ev) {
-        updateLinestyleInput();
+        updateLinestyleInput(linestyles);
     });
-    updateLinestyleInput();
+    updateLinestyleInput(linestyles);
 
     document.querySelector("#view-controls").querySelectorAll("input, rgba-input").forEach(function(el) {
         el.addEventListener("input", function(ev) {
-            console.log(el);
             linestyles[symbolSelect.value] = getLinestyleInput();
         });
     });
@@ -644,7 +511,7 @@ window.onload = function(ev) {
 
             system = parseSystem(getSystemInput());
             run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
-            updateLinestyleSelect(system);
+            updateLinestyleSelect(system, linestyles);
             ev.preventDefault();
             break;
         case " ":
