@@ -119,3 +119,18 @@ textarea {
     text-align: left !important;
     width: 100% !important;
 }
+
+.rgba-input {
+    display: flex;
+    float: right;
+    width: 200px;
+}
+
+.rgba-input-color {
+    width: 100px !important;
+}
+
+.rgba-input-alpha {
+    width: 100% !important;
+}
+

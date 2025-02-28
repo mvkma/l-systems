@@ -4,7 +4,8 @@ import {
 
 import {
     KeyValueInput,
-    NumberInput
+    NumberInput,
+    RGBAInput
 } from "./components.js";
 
 import {
@@ -33,7 +34,7 @@ let state = null;
 const defaultLineStyle = {
     draw: false,
     width: 1.0,
-    color: "red",
+    color: "rgb(255 0 0 / 100%)",
     scale: 1.0,
     shadowOffsetX: 0.0,
     shadowOffsetY: 0.0,
@@ -48,7 +49,7 @@ let linestyles = {
     "F": {
         draw: true,
         width: 1.0,
-        color: "red",
+        color: "rgb(255 0 0 / 100%)",
         scale: 1.0,
         shadowOffsetX: 0.0,
         shadowOffsetY: 0.0,
@@ -447,12 +448,13 @@ function extractSymbols(system) {
 }
 
 /**
- * Update linestyle textarea
+ * Update linestyle select
  *
  * @param {Object} system
  */
-function updateLinestyleInput(system) {
+function updateLinestyleSelect(system) {
     const symbolSelect = document.querySelector("#symbol-select");
+    const prevSelected = symbolSelect.value;
 
     symbolSelect.selectedIndex = 0;
     while (symbolSelect.firstChild) {
@@ -469,8 +471,48 @@ function updateLinestyleInput(system) {
             linestyles[s] = {...defaultLineStyle};
         }
     }
+    const selectedIndex = symbols.indexOf(prevSelected);
+    symbolSelect.selectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
 
     symbolSelect.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+function updateLinestyleInput() {
+    const inputDraw = document.querySelector("#style-input-draw");
+    const inputWidth = document.querySelector("#style-input-width");
+    const inputScale = document.querySelector("#style-input-scale");
+    const inputColor = document.querySelector("#style-input-color");
+    const inputShadowOffsetX = document.querySelector("#style-input-shadow-offset-x");
+    const inputShadowOffsetY = document.querySelector("#style-input-shadow-offset-y");
+    const inputShadowBlur = document.querySelector("#style-input-shadow-blur");
+    const inputShadowColor = document.querySelector("#style-input-shadow-color");
+
+    const linestyle = linestyles[document.querySelector("#symbol-select").value];
+    inputDraw.checked = linestyle["draw"];
+    inputWidth.setValue(linestyle["width"]);
+    inputScale.setValue(linestyle["scale"]);
+    inputColor.setRgba(linestyle["color"]);
+    inputShadowOffsetX.setValue(linestyle["shadowOffsetX"]);
+    inputShadowOffsetY.setValue(linestyle["shadowOffsetY"]);
+    inputShadowBlur.setValue(linestyle["shadowBlur"]);
+    inputShadowColor.setRgba(linestyle["shadowColor"]);
+}
+
+function getLinestyleInput() {
+    const style = {};
+
+    style["draw"] = document.querySelector("#style-input-draw").checked;
+    style["width"] = document.querySelector("#style-input-width").getValue();
+    style["scale"] = document.querySelector("#style-input-scale").getValue();
+    style["color"] = document.querySelector("#style-input-color").getRgba();
+    style["shadowOffsetX"] = document.querySelector("#style-input-shadow-offset-x").getValue();
+    style["shadowOffsetY"] = document.querySelector("#style-input-shadow-offset-y").getValue();
+    style["shadowBlur"] = document.querySelector("#style-input-shadow-blur").getValue();
+    style["shadowColor"] = document.querySelector("#style-input-shadow-color").getRgba();
+
+    console.log('getLinestyleInput');
+    console.log(style);
+    return style;
 }
 
 /**
@@ -520,6 +562,8 @@ customElements.define("number-input", NumberInput, { extends: "input" });
 
 customElements.define("key-value-input", KeyValueInput);
 
+customElements.define("rgba-input", RGBAInput);
+
 window.onload = function(ev) {
     ctx0 = document.querySelector("#canvas0").getContext("2d");
     ctx1 = document.querySelector("#canvas1").getContext("2d");
@@ -532,26 +576,24 @@ window.onload = function(ev) {
     systemSelect.addEventListener("input", function(ev) {
         system = parseSystem(systems[ev.target.selectedIndex]);
         updateSystemInput(systems[systemSelect.selectedIndex]);
-        updateLinestyleInput(system);
+        updateLinestyleSelect(system);
     });
     updateSystemInput(systems[systemSelect.selectedIndex]);
     system = parseSystem(systems[systemSelect.selectedIndex]);
-    updateLinestyleInput(system);
+    updateLinestyleSelect(system);
 
     const symbolSelect = document.querySelector("#symbol-select");
-    const linestyleInput = document.querySelector("#linestyle-input");
 
     symbolSelect.addEventListener("input", function(ev) {
-        linestyleInput.value = JSON.stringify(linestyles[ev.target.value], undefined, 2);
+        updateLinestyleInput();
     });
-    linestyleInput.value = JSON.stringify(linestyles[symbolSelect.value], undefined, 2);
+    updateLinestyleInput();
 
-    linestyleInput.addEventListener("input", function(ev) {
-        try {
-            linestyles[symbolSelect.value] = JSON.parse(ev.target.value);
-        } catch (error) {
-            return;
-        }
+    document.querySelector("#view-controls").querySelectorAll("input, rgba-input").forEach(function(el) {
+        el.addEventListener("input", function(ev) {
+            console.log(el);
+            linestyles[symbolSelect.value] = getLinestyleInput();
+        });
     });
 
     let frame = undefined;
@@ -602,7 +644,7 @@ window.onload = function(ev) {
 
             system = parseSystem(getSystemInput());
             run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
-            updateLinestyleInput(system);
+            updateLinestyleSelect(system);
             ev.preventDefault();
             break;
         case " ":

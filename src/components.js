@@ -13,7 +13,7 @@ class NumberInput extends HTMLInputElement {
         } else {
             this.value = n.toString().slice(0, parseInt(this.attributes["maxlength"].value));
         }
-        this.dispatchEvent(new Event("input", { bubbles: true }));
+        // this.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
     connectedCallback() {
@@ -31,10 +31,12 @@ class NumberInput extends HTMLInputElement {
             case "ArrowUp":
                 this.setValue(this.getValue() + step);
                 ev.stopPropagation();
+                this.dispatchEvent(new InputEvent("input"));
                 break;
             case "ArrowDown":
                 this.setValue(this.getValue() - step);
                 ev.stopPropagation();
+                this.dispatchEvent(new InputEvent("input"));
                 break;
             default:
                 break;
@@ -129,7 +131,59 @@ class KeyValueInput extends HTMLElement {
     }
 }
 
+class RGBAInput extends HTMLElement {
+    constructor() {
+        super();
+
+        const shadow = this.attachShadow({ mode: "open" });
+        const container = document.createElement("div");
+        container.classList.add("rgba-input");
+        container.innerHTML = `
+<link rel="stylesheet" type="text/css" href="assets/css/main.css"/>
+<link rel="stylesheet" type="text/css" href="assets/css/l-systems.css"/>
+<input class="rgba-input-color" type="color">
+<input class="rgba-input-alpha" is="number-input" type="" step="1" value="0" maxlength="3">
+`
+
+        shadow.appendChild(container);
+        this.color = shadow.querySelector(".rgba-input-color");
+        this.alpha = shadow.querySelector(".rgba-input-alpha");
+
+        shadow.querySelectorAll("input").forEach(
+            (el) => el.addEventListener(
+                "input",
+                () => this.dispatchEvent(new Event("input", { bubbles: true }))
+            )
+        );
+    }
+
+    connectedCallback() {
+    }
+
+    getRgb() {
+        const val = parseInt(this.color.value.slice(1), 16);
+        const rgb = [(val >> 16) % 256, (val >> 8) % 256, (val >> 0) % 256];
+
+        return `rgb(${rgb.join(" ")})`;
+    }
+
+    getRgba() {
+        const rgb = this.getRgb();
+        const alpha = Math.max(Math.min(Math.floor(this.alpha.value), 100), 0);
+        return `rgb(${rgb.slice(4, -1)} / ${alpha}%)`;
+    }
+
+    setRgba(rgba) {
+        const parts = rgba.slice(4, -1).split(" ");
+        const hex = parts.slice(0, 3).map(n => parseInt(n).toString(16).padStart(2, "0")).join("");
+        const alpha = parseInt(parts[4].slice(0, -1));
+        this.color.value = `#${hex}`;
+        this.alpha.setValue(alpha);
+    }
+}
+
 export {
     KeyValueInput,
     NumberInput,
+    RGBAInput,
 };
