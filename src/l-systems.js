@@ -400,7 +400,7 @@ function run(system, level, drawingParams = {}) {
     const turtle = {
         step: 10,
         heading: [0.0, -1.0],
-        position: [0, 0],
+        position: drawingParams["offset"] || [0, 0],
         angle: Math.PI / 180 * system["angle"],
     }
 
@@ -470,6 +470,7 @@ window.onload = function(ev) {
 
     const  drawingParameters = {
         zoom: 1.0,
+        offset: [0.0, 0.0],
     };
 
     const animateCallback = function() {
@@ -488,7 +489,7 @@ window.onload = function(ev) {
         draw({
             step: 10,
             heading: [0.0, -1.0],
-            position: [0, 0],
+            position: drawingParameters["offset"],
             angle: Math.PI / 180 * angle
         }, drawingParameters);
 
@@ -542,15 +543,65 @@ window.onload = function(ev) {
 
         system = system || parseSystem(getSystemInput());
         drawingParameters["zoom"] += ev.deltaY < 0 ? 0.1 : -0.1;
+        console.log(ev);
 
         if (!animate) {
             draw({
                 step: 10,
                 heading: [0.0, -1.0],
-                position: [0, 0],
+                position: drawingParameters["offset"],
                 angle: Math.PI / 180 * system["angle"]
             }, { zoom: drawingParameters["zoom"] });
         }
+        ev.preventDefault();
+    });
+
+    const touches = {};
+
+    ctx0.canvas.addEventListener("pointerdown", function(ev) {
+        touches[ev.pointerId] = { pageX: ev.pageX, pageY: ev.pageY, moved: false };
+        ev.preventDefault();
+    });
+
+    ctx0.canvas.addEventListener("pointermove", function(ev) {
+        const touch = touches[ev.pointerId];
+        if (touch === undefined) {
+            return;
+        }
+
+        if (state === null) {
+            ev.preventDefault();
+            return;
+        }
+
+        const dx = ev.pageX - touch.pageX;
+        const dy = ev.pageY - touch.pageY;
+        touch.pageX = ev.pageX;
+        touch.pageY = ev.pageY;
+        touch.moved = true;
+
+        system = system || parseSystem(getSystemInput());
+        drawingParameters["offset"][0] += dx * 2;
+        drawingParameters["offset"][1] += dy * 2;
+        if (!animate) {
+            draw({
+                step: 10,
+                heading: [0.0, -1.0],
+                position: drawingParameters["offset"],
+                angle: Math.PI / 180 * system["angle"]
+            }, { zoom: drawingParameters["zoom"] });
+        }
+
+        ev.preventDefault();
+    });
+
+    ctx0.canvas.addEventListener("pointerup", function(ev) {
+        delete touches[ev.pointerId];
+        ev.preventDefault();
+    });
+
+    ctx0.canvas.addEventListener("pointercancel", function(ev) {
+        delete touches[ev.pointerId];
         ev.preventDefault();
     });
 }
