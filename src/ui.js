@@ -1,6 +1,4 @@
-/**
- * @type {Object<string,HTMLElement>}
- */
+/** @type {Object<string,HTMLElement>} */
 const systemControls = {
     angle: document.querySelector("#system-input-angle"),
     level: document.querySelector("#system-input-level"),
@@ -9,9 +7,7 @@ const systemControls = {
     consts: document.querySelector("#system-input-consts"),
 };
 
-/**
- * @type {Object<string,HTMLElement>}
- */
+/** @type {Object<string,HTMLElement>} */
 const styleControls = {
     draw: document.querySelector("#style-input-draw"),
     width: document.querySelector("#style-input-width"),
@@ -23,9 +19,7 @@ const styleControls = {
     shadowColor: document.querySelector("#style-input-shadow-color"),
 };
 
-/**
- * @type {Object<string,any>}
- */
+/** @type {Object<string,any>} */
 const defaultLineStyle = {
     draw: false,
     width: 1.0,

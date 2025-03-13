@@ -1,6 +1,4 @@
-/**
- * @type {Object}
- */
+/** @type {Object} */
 const systems = [
     {
         angle: 25,

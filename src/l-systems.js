@@ -25,24 +25,16 @@ customElements.define("number-input", NumberInput, { extends: "input" });
 customElements.define("key-value-input", KeyValueInput);
 customElements.define("rgba-input", RGBAInput);
 
-/**
- * @type {CanvasRenderingContext2D}
- */
+/** @type {CanvasRenderingContext2D} */
 const ctx0 = document.querySelector("#canvas0").getContext("2d");
 
-/**
- * @type {CanvasRenderingContext2D}
- */
+/** @type {CanvasRenderingContext2D} */
 const ctx1 = document.querySelector("#canvas1").getContext("2d");
 
-/**
- * @type {string}
- */
+/** @type {string} */
 let state = null;
 
-/**
- * @type {Object<string,any>}
- */
+/** @type {Object<string,any>} */
 const linestyles = {
     "F": {
         draw: true,

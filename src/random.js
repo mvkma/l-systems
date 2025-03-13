@@ -1,11 +1,7 @@
-/**
- * @type {Uint16Array}
- */
+/** @type {Uint16Array} */
 let random = null;
 
-/**
- * @type {number}
- */
+/** @type {number} */
 let ix = null;
 
 /**
