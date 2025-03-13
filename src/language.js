@@ -1,3 +1,31 @@
+/**
+ * @typedef {Object} Symbol
+ * @property {string} symbol
+ * @property {Object<string, number> values
+ */
+
+/**
+ * @typedef {(bindings: Object<string, number>) => Symbol[]} Rule
+ */
+
+/**
+ * @typedef {Object} ParsedSystem
+ * @property {number} angle
+ * @property {number} level
+ * @property {Object<string, number>} consts
+ * @property {Object<string, Rule>} rules
+ * @property {Symbol[]} axiom
+ * @property {Set<string>} symbols
+ */
+
+/**
+ * @typedef {Object} Operator
+ * @property {number} prec - precedence
+ * @property {number} args - number of arguments
+ * @property {(...args: number[]) => number} func - function to evaluate the operator
+ */
+
+/** @type {Object<string, Operator>} */
 const operators = {
     "+": {
         prec: 1,
@@ -24,21 +52,20 @@ const operators = {
 /**
  * Evaluate RPN
  *
- * @param {Array<string>} tokens
- * @param {Object<string,number>} bindings
+ * @param {string[]} tokens
+ * @param {Object<string, number>} bindings
  *
  * @returns {number}
  */
 function evalRPN(tokens, bindings) {
-    let op;
-    let val;
-    let args;
+    /** @type number[] */
     const stack = [];
 
     for (const t of tokens) {
-        op = operators[t];
+        const op = operators[t];
 
         if (op === undefined) {
+            let val;
             if (t[0] >= "a" && t[0] <= "z") {
                 val = bindings[t];
 
@@ -53,7 +80,7 @@ function evalRPN(tokens, bindings) {
             }
             stack.push(val);
         } else {
-            args = [];
+            const args = [];
             for (let i = 0; i < op.args; i++) {
                 args.push(stack.pop());
             }
@@ -72,12 +99,15 @@ function evalRPN(tokens, bindings) {
  * Shunting yard algorithm
  * https://en.wikipedia.org/wiki/Shunting_yard_algorithm
  *
- * @param {Array<string>} tokens
+ * @param {string[]} tokens
  *
  * @returns {Array<string>}
  */
 function shuntingYard(tokens) {
+    /** @type {string[]} */
     const stack = [];
+
+    /** @type {string[]} */
     const result = [];
 
     for (const t of tokens) {
@@ -120,9 +150,9 @@ function shuntingYard(tokens) {
  * Create symbol with expression parameters
  *
  * @param {string} s - name
- * @param {Object<string,Array<string>} parameters - rpns to evaluate
+ * @param {Object<string, string[]>} parameters - rpns to evaluate
  *
- * @returns {(bindings: any) => any}
+ * @returns {(bindings: Object<string, number>) => Symbol}
  */
 function symb(s, parameters) {
     return function(bindings) {
@@ -143,8 +173,8 @@ function symb(s, parameters) {
 /**
  * Evolve system to given level
  *
- * @param {any} axiom
- * @param {Object<string, (b: any) => any[]>} rules
+ * @param {Symbol[]} axiom
+ * @param {Object<string, Rule>} rules
  * @param {Object<string, number>} consts
  * @param {number} level
  *
@@ -152,14 +182,12 @@ function symb(s, parameters) {
  */
 function evolve(axiom, rules, consts, level) {
     let state = axiom;
-    let rule;
-    let next;
     let n = 0;
 
     while (n < level) {
-        next = [];
+        const next = [];
         for (const s of state) {
-            rule = rules[s["symbol"]];
+            const rule = rules[s["symbol"]];
             if (rule === undefined) {
                 next.push(s);
             } else {
@@ -198,13 +226,15 @@ function stateToString(state) {
 /**
  * Parse rule string into function that evaluates it (with some parameters)
  *
- * @param {Object<string,Array<string>>} parameters
+ * @param {Object<string, string[]>} parameters
  * @param {string} rule
  *
- * @returns {(bindings: any) => any[]}
+ * @returns {Rule}
  */
 function parseRuleString(parameters, rule) {
+    /** @type {((bindings: Object<string, number>) => Symbol)[]} */
     const rhs = [];
+
     const emptyParams = {};
     for (const [s, params] of Object.entries(parameters)) {
         emptyParams[s] = {};
@@ -261,7 +291,7 @@ function parseRuleString(parameters, rule) {
 /**
  * @param {string} lhs
  *
- * @returns {Array<string>}
+ * @returns {string[]}
  */
 function getParameters(lhs) {
     if (lhs.length > 3) {
@@ -274,7 +304,7 @@ function getParameters(lhs) {
 /**
  * @param {string} text
  *
- * @returns {Object<string,any>}
+ * @returns {ParsedSystem}
  */
 function parseSystem(text) {
     let json;
@@ -285,14 +315,15 @@ function parseSystem(text) {
         json = text;
     }
 
-    const system = {};
-
-    system["angle"] = json["angle"];
-    system["level"] = json["level"];
-    system["consts"] = json["consts"] || {};
-    system["rules"] = {};
-    system["axiom"] = [];
-    system["symbols"] = new Set();
+    /** @type {ParsedSystem} */
+    const system = {
+        angle: json["angle"],
+        level: json["level"],
+        consts: json["consts"] || {},
+        rules: {},
+        axiom: [],
+        symbols: new Set(),
+    };
 
     const positionMap = {
         "+": ["a"],
