@@ -88,9 +88,10 @@ function *generator(axiom, productions, n) {
 }
 
 /**
+ * @param {CanvasRenderingContext2D} ctx
  * @param {Object} initialTurtle
  */
-function centerTransform(initialTurtle) {
+function centerTransform(ctx, initialTurtle) {
     const stack = [];
     let turtle = new Float32Array([...initialTurtle["position"], ...initialTurtle["heading"]]);
     let step, angle;
@@ -156,10 +157,10 @@ function centerTransform(initialTurtle) {
     const dx = bounds[1] - bounds[0];
     const dy = bounds[3] - bounds[2];
 
-    const r = Math.max(dx / ctx0.canvas.width, dy / ctx0.canvas.height);
+    const r = Math.max(dx / ctx.canvas.width, dy / ctx.canvas.height);
 
-    const sx = (ctx0.canvas.width - dx / r) / 2.0;
-    const sy = (ctx0.canvas.height - dy / r) / 2.0;
+    const sx = (ctx.canvas.width - dx / r) / 2.0;
+    const sy = (ctx.canvas.height - dy / r) / 2.0;
 
     return [r, -bounds[0] / r + sx, -bounds[2] / r + sy];
 }
@@ -167,58 +168,60 @@ function centerTransform(initialTurtle) {
 /**
  * Plot state linearly
  *
+ * @param {CanvasRenderingContext2D}
  * @param {number} depth
  */
-function plot(depth) {
-    ctx1.clearRect(0, 0, ctx1.canvas.width, ctx1.canvas.height);
+function plot(ctx, depth) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     let x = 0;
     let y = 0;
-    let dx = ctx1.canvas.width / state.length;
-    let dy = ctx1.canvas.height / depth;
+    let dx = ctx.canvas.width / state.length;
+    let dy = ctx.canvas.height / depth;
 
     for (const c of state) {
-        ctx1.fillStyle = "yellow";
+        ctx.fillStyle = "yellow";
         switch (c["symbol"]) {
         case "F":
-            ctx1.fillStyle = "lightblue";
+            ctx.fillStyle = "lightblue";
             break;
         case "f":
-            ctx1.fillStyle = "lightgrey";
+            ctx.fillStyle = "lightgrey";
             break;
         case "+":
-            ctx1.fillStyle = "green";
+            ctx.fillStyle = "green";
             break;
         case "-":
-            ctx1.fillStyle = "red";
+            ctx.fillStyle = "red";
             break;
         case "[":
             y += dy / 2;
-            ctx1.fillStyle = "grey";
+            ctx.fillStyle = "grey";
             break;
         case "]":
             y -= dy / 2;
-            ctx1.fillStyle = "grey";
+            ctx.fillStyle = "grey";
             break;
         default:
             break;
         }
-        ctx1.fillRect(x, y, dx, dy);
+        ctx.fillRect(x, y, dx, dy);
         x += dx;
     }
 }
 
 /**
+ * @param {CanvasRenderingContext2D} ctx
  * @param {Object} initialTurtle
  * @param {Object} drawingParams
  */
-function draw(initialTurtle, drawingParams = {}) {
+function draw(ctx, initialTurtle, drawingParams = {}) {
     const stack = [];
     const animate = drawingParams["animate"] || false;
     const interval = drawingParams["interval"] || 2;
     const zoom = drawingParams["zoom"] || 1.0;
 
-    const [r, deltax, deltay] = centerTransform(initialTurtle);
+    const [r, deltax, deltay] = centerTransform(ctx, initialTurtle);
 
     let turtle = new Float32Array([
         initialTurtle["position"][0] + deltax,
@@ -234,15 +237,15 @@ function draw(initialTurtle, drawingParams = {}) {
 
     let cur, mat;
 
-    ctx0.clearRect(0, 0, ctx0.canvas.width, ctx0.canvas.height);
-    ctx0.translate(ctx0.canvas.width / 2, ctx0.canvas.height / 2);
-    ctx0.scale(zoom, zoom);
-    ctx0.translate(-ctx0.canvas.width / 2, -ctx0.canvas.height / 2);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.translate(ctx.canvas.width / 2, ctx.canvas.height / 2);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-ctx.canvas.width / 2, -ctx.canvas.height / 2);
 
     let prev, draw;
 
-    ctx0.beginPath();
-    ctx0.moveTo(...turtle);
+    ctx.beginPath();
+    ctx.moveTo(...turtle);
 
     const drawingStep = function (c) {
         switch (c["symbol"]) {
@@ -250,7 +253,7 @@ function draw(initialTurtle, drawingParams = {}) {
             step = (c["values"]["s"] || initialTurtle["step"]) / r;
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            ctx0.moveTo(...turtle);
+            ctx.moveTo(...turtle);
             break;
         case "+":
         case "-":
@@ -270,7 +273,7 @@ function draw(initialTurtle, drawingParams = {}) {
             break;
         case "]":
             turtle = stack.pop();
-            ctx0.moveTo(...turtle);
+            ctx.moveTo(...turtle);
             break;
         default:
             if (prev !== c) {
@@ -279,21 +282,21 @@ function draw(initialTurtle, drawingParams = {}) {
                 if (!draw) {
                     break;
                 }
-                ctx0.stroke();
-                ctx0.beginPath();
-                ctx0.moveTo(...turtle);
-                ctx0.lineWidth = linestyles[symb]["width"];
-                ctx0.strokeStyle = linestyles[symb]["color"];
-                ctx0.shadowOffsetX = linestyles[symb]["shadowOffsetX"];
-                ctx0.shadowOffsetY = linestyles[symb]["shadowOffsetY"];
-                ctx0.shadowBlur = linestyles[symb]["shadowBlur"];
-                ctx0.shadowColor = linestyles[symb]["shadowColor"];
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(...turtle);
+                ctx.lineWidth = linestyles[symb]["width"];
+                ctx.strokeStyle = linestyles[symb]["color"];
+                ctx.shadowOffsetX = linestyles[symb]["shadowOffsetX"];
+                ctx.shadowOffsetY = linestyles[symb]["shadowOffsetY"];
+                ctx.shadowBlur = linestyles[symb]["shadowBlur"];
+                ctx.shadowColor = linestyles[symb]["shadowColor"];
                 prev = c;
             }
             step = (c["values"]["s"] || initialTurtle["step"]) / r;
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            ctx0.lineTo(...turtle);
+            ctx.lineTo(...turtle);
             break;
         }
     }
@@ -305,30 +308,19 @@ function draw(initialTurtle, drawingParams = {}) {
                 window.clearInterval(timer);
                 console.log("done");
             }
-            ctx0.beginPath();
-            ctx0.moveTo(...turtle);
+            ctx.beginPath();
+            ctx.moveTo(...turtle);
             drawingStep(state[i]);
-            ctx0.stroke();
-            ctx1.beginPath();
-            ctx1.fillStyle = "lightblue";
-            ctx1.arc(
-                ctx1.canvas.width * i / state.length,
-                ctx1.canvas.height * 0.9,
-                3.0,
-                0.0,
-                Math.PI * 2.0,
-                false
-            );
-            ctx1.fill();
+            ctx.stroke();
             i++;
         }, interval);
     } else {
         for (const c of state) {
             drawingStep(c);
         }
-        ctx0.stroke();
+        ctx.stroke();
     }
-    ctx0.resetTransform();
+    ctx.resetTransform();
 }
 
 /**
@@ -394,11 +386,13 @@ function show(stats) {
 /**
  * Evolve system to the given level
  *
+ * @param {CanvasRenderingContext2D} ctx0
+ * @param {CanvasRenderingContext2D} ctx1
  * @param {Object} system
  * @param {number} level
  * @param {Object} drawingParams
  */
-function run(system, level, drawingParams = {}) {
+function run(ctx0, ctx1, system, drawingParams = {}) {
     state = system["axiom"];
 
     const turtle = {
@@ -420,11 +414,11 @@ function run(system, level, drawingParams = {}) {
     stats = {...stats, ...statistics()};
 
     t0 = performance.now();
-    plot(stats["depth"]);
+    plot(ctx1, stats["depth"]);
     stats["plot"] = performance.now() - t0;
 
     t0 = performance.now();
-    draw(turtle, drawingParams);
+    draw(ctx0, turtle, drawingParams);
     stats["turtle"] = performance.now() - t0;
 
     show(stats);
@@ -470,7 +464,7 @@ const  drawingParameters = {
 const animateCallback = function() {
     if (system === undefined || state === null) {
         system = parseSystem(getSystemInput());
-        run(system, system["level"]);
+        run(ctx0, ctx1, system);
     }
 
     if (time >= 1.0) {
@@ -480,12 +474,15 @@ const animateCallback = function() {
     angle = 0.5 + 4.0 * Math.pow((time - 0.5), 3.0);
     angle *= 180;
     time += 0.005;
-    draw({
-        step: 10,
-        heading: [0.0, -1.0],
-        position: drawingParameters["offset"],
-        angle: Math.PI / 180 * angle
-    }, drawingParameters);
+    draw(ctx0,
+         {
+             step: 10,
+             heading: [0.0, -1.0],
+             position: drawingParameters["offset"],
+             angle: Math.PI / 180 * angle
+         },
+         drawingParameters
+        );
 
     if (animate) {
         frame = window.requestAnimationFrame(() => animateCallback());
@@ -505,7 +502,7 @@ window.addEventListener("keydown", function(ev) {
         }
 
         system = parseSystem(getSystemInput());
-        run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
+        run(ctx0, ctx1, system, {...drawingParameters, ...{ animate: ev.ctrlKey }});
         updateLinestyleSelect(system, linestyles);
         ev.preventDefault();
         break;
@@ -540,12 +537,17 @@ ctx0.canvas.addEventListener("wheel", function(ev) {
     console.log(ev);
 
     if (!animate) {
-        draw({
-            step: 10,
-            heading: [0.0, -1.0],
-            position: drawingParameters["offset"],
-            angle: Math.PI / 180 * system["angle"]
-        }, { zoom: drawingParameters["zoom"] });
+        draw(ctx0,
+             {
+                 step: 10,
+                 heading: [0.0, -1.0],
+                 position: drawingParameters["offset"],
+                 angle: Math.PI / 180 * system["angle"]
+             },
+             {
+                 zoom: drawingParameters["zoom"]
+             }
+            );
     }
     ev.preventDefault();
 });
@@ -578,12 +580,16 @@ ctx0.canvas.addEventListener("pointermove", function(ev) {
     drawingParameters["offset"][0] += dx * 2;
     drawingParameters["offset"][1] += dy * 2;
     if (!animate) {
-        draw({
-            step: 10,
-            heading: [0.0, -1.0],
-            position: drawingParameters["offset"],
-            angle: Math.PI / 180 * system["angle"]
-        }, { zoom: drawingParameters["zoom"] });
+        draw(ctx0,
+             {
+                 step: 10,
+                 heading: [0.0, -1.0],
+                 position: drawingParameters["offset"],
+                 angle: Math.PI / 180 * system["angle"]
+             },
+             {
+                 zoom: drawingParameters["zoom"],
+             });
     }
 
     ev.preventDefault();
