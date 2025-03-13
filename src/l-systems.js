@@ -416,6 +416,7 @@ function run(ctx0, ctx1, system, drawingParams = {}) {
     show(stats);
 }
 
+/** @type {import("./language.js").ParsedSystem} */
 let system = undefined;
 
 const systemSelect = document.querySelector("#system-select");

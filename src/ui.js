@@ -51,7 +51,7 @@ function updateLinestyleInput(linestyles) {
 /**
  * Update the input fields for the system
  *
- * @param {Object<string,any>} system - unparsed system
+ * @param {import("./systems").SystemInput} system - unparsed system
  */
 function updateSystemInput(system) {
     systemControls["angle"].setValue(system["angle"]);
@@ -87,7 +87,7 @@ function getLinestyleInput() {
 /**
  * Read system inputs from UI
  *
- * @returns {Object<string,any>}
+ * @returns {import("./systems").SystemInput}
  */
 function getSystemInput() {
     return {

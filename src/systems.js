@@ -1,4 +1,12 @@
-/** @type {Object} */
+/**
+ * @typedef {Object} SystemInput
+ * @property {number} angle
+ * @property {number} level
+ * @property {string[]} axiom
+ * @property {Object<string, string>} productions
+ */
+
+/** @type {SystemInput[]} */
 const systems = [
     {
         angle: 25,
