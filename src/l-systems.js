@@ -21,15 +21,19 @@ import {
     updateSystemInput,
 } from "./ui.js";
 
-/**
- * @type {CanvasRenderingContext2D}
- */
-let ctx0 = null;
+customElements.define("number-input", NumberInput, { extends: "input" });
+customElements.define("key-value-input", KeyValueInput);
+customElements.define("rgba-input", RGBAInput);
 
 /**
  * @type {CanvasRenderingContext2D}
  */
-let ctx1 = null;
+const ctx0 = document.querySelector("#canvas0").getContext("2d");
+
+/**
+ * @type {CanvasRenderingContext2D}
+ */
+const ctx1 = document.querySelector("#canvas1").getContext("2d");
 
 /**
  * @type {string}
@@ -39,7 +43,7 @@ let state = null;
 /**
  * @type {Object<string,any>}
  */
-let linestyles = {
+const linestyles = {
     "F": {
         draw: true,
         width: 1.0,
@@ -426,182 +430,171 @@ function run(system, level, drawingParams = {}) {
     show(stats);
 }
 
-customElements.define("number-input", NumberInput, { extends: "input" });
+let system = undefined;
 
-customElements.define("key-value-input", KeyValueInput);
+const systemSelect = document.querySelector("#system-select");
+systemSelect.selectedIndex = 0;
 
-customElements.define("rgba-input", RGBAInput);
-
-window.onload = function(ev) {
-    ctx0 = document.querySelector("#canvas0").getContext("2d");
-    ctx1 = document.querySelector("#canvas1").getContext("2d");
-
-    let system = undefined;
-
-    const systemSelect = document.querySelector("#system-select");
-    systemSelect.selectedIndex = 0;
-
-    systemSelect.addEventListener("input", function(ev) {
-        system = parseSystem(systems[ev.target.selectedIndex]);
-        updateSystemInput(systems[systemSelect.selectedIndex]);
-        updateLinestyleSelect(system, linestyles);
-    });
+systemSelect.addEventListener("input", function(ev) {
+    system = parseSystem(systems[ev.target.selectedIndex]);
     updateSystemInput(systems[systemSelect.selectedIndex]);
-    system = parseSystem(systems[systemSelect.selectedIndex]);
     updateLinestyleSelect(system, linestyles);
+});
+updateSystemInput(systems[systemSelect.selectedIndex]);
+system = parseSystem(systems[systemSelect.selectedIndex]);
+updateLinestyleSelect(system, linestyles);
 
-    const symbolSelect = document.querySelector("#symbol-select");
+const symbolSelect = document.querySelector("#symbol-select");
 
-    symbolSelect.addEventListener("input", function(ev) {
-        updateLinestyleInput(linestyles);
-    });
+symbolSelect.addEventListener("input", function(ev) {
     updateLinestyleInput(linestyles);
+});
+updateLinestyleInput(linestyles);
 
-    document.querySelector("#view-controls").querySelectorAll("input, rgba-input").forEach(function(el) {
-        el.addEventListener("input", function(ev) {
-            linestyles[symbolSelect.value] = getLinestyleInput();
-        });
+document.querySelector("#view-controls").querySelectorAll("input, rgba-input").forEach(function(el) {
+    el.addEventListener("input", function(ev) {
+        linestyles[symbolSelect.value] = getLinestyleInput();
     });
+});
 
-    let frame = undefined;
-    let animate = false;
-    let time = 0.0;
-    let angle = 0.0;
+let frame = undefined;
+let animate = false;
+let time = 0.0;
+let angle = 0.0;
 
-    const  drawingParameters = {
-        zoom: 1.0,
-        offset: [0.0, 0.0],
-    };
+const  drawingParameters = {
+    zoom: 1.0,
+    offset: [0.0, 0.0],
+};
 
-    const animateCallback = function() {
-        if (system === undefined || state === null) {
-            system = parseSystem(getSystemInput());
-            run(system, system["level"]);
+const animateCallback = function() {
+    if (system === undefined || state === null) {
+        system = parseSystem(getSystemInput());
+        run(system, system["level"]);
+    }
+
+    if (time >= 1.0) {
+        time = 0.0;
+    }
+
+    angle = 0.5 + 4.0 * Math.pow((time - 0.5), 3.0);
+    angle *= 180;
+    time += 0.005;
+    draw({
+        step: 10,
+        heading: [0.0, -1.0],
+        position: drawingParameters["offset"],
+        angle: Math.PI / 180 * angle
+    }, drawingParameters);
+
+    if (animate) {
+        frame = window.requestAnimationFrame(() => animateCallback());
+    }
+}
+
+window.addEventListener("keydown", function(ev) {
+    switch (ev.key) {
+    case "Enter":
+        if (!ev.shiftKey) {
+            break;
         }
 
-        if (time >= 1.0) {
+        animate = false;
+        if (frame !== undefined) {
+            window.cancelAnimationFrame(frame);
+        }
+
+        system = parseSystem(getSystemInput());
+        run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
+        updateLinestyleSelect(system, linestyles);
+        ev.preventDefault();
+        break;
+    case " ":
+        if (ev.ctrlKey) {
+            system = undefined;
+            drawingParameters["zoom"] = 1.0;
             time = 0.0;
+            angle = 0.0;
+        }
+        animate = !animate;
+
+        if (animate) {
+            window.requestAnimationFrame(() => animateCallback());
         }
 
-        angle = 0.5 + 4.0 * Math.pow((time - 0.5), 3.0);
-        angle *= 180;
-        time += 0.005;
+        ev.preventDefault();
+        break;
+    default:
+        break;
+    }
+});
+
+ctx0.canvas.addEventListener("wheel", function(ev) {
+    if (state === null) {
+        ev.preventDefault();
+        return ;
+    }
+
+    system = system || parseSystem(getSystemInput());
+    drawingParameters["zoom"] += ev.deltaY < 0 ? 0.1 : -0.1;
+    console.log(ev);
+
+    if (!animate) {
         draw({
             step: 10,
             heading: [0.0, -1.0],
             position: drawingParameters["offset"],
-            angle: Math.PI / 180 * angle
-        }, drawingParameters);
+            angle: Math.PI / 180 * system["angle"]
+        }, { zoom: drawingParameters["zoom"] });
+    }
+    ev.preventDefault();
+});
 
-        if (animate) {
-            frame = window.requestAnimationFrame(() => animateCallback());
-        }
+const touches = {};
+
+ctx0.canvas.addEventListener("pointerdown", function(ev) {
+    touches[ev.pointerId] = { pageX: ev.pageX, pageY: ev.pageY, moved: false };
+    ev.preventDefault();
+});
+
+ctx0.canvas.addEventListener("pointermove", function(ev) {
+    const touch = touches[ev.pointerId];
+    if (touch === undefined) {
+        return;
     }
 
-    window.addEventListener("keydown", function(ev) {
-        switch (ev.key) {
-        case "Enter":
-            if (!ev.shiftKey) {
-                break;
-            }
-
-            animate = false;
-            if (frame !== undefined) {
-                window.cancelAnimationFrame(frame);
-            }
-
-            system = parseSystem(getSystemInput());
-            run(system, system["level"], {...drawingParameters, ...{ animate: ev.ctrlKey }});
-            updateLinestyleSelect(system, linestyles);
-            ev.preventDefault();
-            break;
-        case " ":
-            if (ev.ctrlKey) {
-                system = undefined;
-                drawingParameters["zoom"] = 1.0;
-                time = 0.0;
-                angle = 0.0;
-            }
-            animate = !animate;
-
-            if (animate) {
-                window.requestAnimationFrame(() => animateCallback());
-            }
-
-            ev.preventDefault();
-            break;
-        default:
-            break;
-        }
-    });
-
-    ctx0.canvas.addEventListener("wheel", function(ev) {
-        if (state === null) {
-            ev.preventDefault();
-            return ;
-        }
-
-        system = system || parseSystem(getSystemInput());
-        drawingParameters["zoom"] += ev.deltaY < 0 ? 0.1 : -0.1;
-        console.log(ev);
-
-        if (!animate) {
-            draw({
-                step: 10,
-                heading: [0.0, -1.0],
-                position: drawingParameters["offset"],
-                angle: Math.PI / 180 * system["angle"]
-            }, { zoom: drawingParameters["zoom"] });
-        }
+    if (state === null) {
         ev.preventDefault();
-    });
+        return;
+    }
 
-    const touches = {};
+    const dx = ev.pageX - touch.pageX;
+    const dy = ev.pageY - touch.pageY;
+    touch.pageX = ev.pageX;
+    touch.pageY = ev.pageY;
+    touch.moved = true;
 
-    ctx0.canvas.addEventListener("pointerdown", function(ev) {
-        touches[ev.pointerId] = { pageX: ev.pageX, pageY: ev.pageY, moved: false };
-        ev.preventDefault();
-    });
+    system = system || parseSystem(getSystemInput());
+    drawingParameters["offset"][0] += dx * 2;
+    drawingParameters["offset"][1] += dy * 2;
+    if (!animate) {
+        draw({
+            step: 10,
+            heading: [0.0, -1.0],
+            position: drawingParameters["offset"],
+            angle: Math.PI / 180 * system["angle"]
+        }, { zoom: drawingParameters["zoom"] });
+    }
 
-    ctx0.canvas.addEventListener("pointermove", function(ev) {
-        const touch = touches[ev.pointerId];
-        if (touch === undefined) {
-            return;
-        }
+    ev.preventDefault();
+});
 
-        if (state === null) {
-            ev.preventDefault();
-            return;
-        }
+ctx0.canvas.addEventListener("pointerup", function(ev) {
+    delete touches[ev.pointerId];
+    ev.preventDefault();
+});
 
-        const dx = ev.pageX - touch.pageX;
-        const dy = ev.pageY - touch.pageY;
-        touch.pageX = ev.pageX;
-        touch.pageY = ev.pageY;
-        touch.moved = true;
-
-        system = system || parseSystem(getSystemInput());
-        drawingParameters["offset"][0] += dx * 2;
-        drawingParameters["offset"][1] += dy * 2;
-        if (!animate) {
-            draw({
-                step: 10,
-                heading: [0.0, -1.0],
-                position: drawingParameters["offset"],
-                angle: Math.PI / 180 * system["angle"]
-            }, { zoom: drawingParameters["zoom"] });
-        }
-
-        ev.preventDefault();
-    });
-
-    ctx0.canvas.addEventListener("pointerup", function(ev) {
-        delete touches[ev.pointerId];
-        ev.preventDefault();
-    });
-
-    ctx0.canvas.addEventListener("pointercancel", function(ev) {
-        delete touches[ev.pointerId];
-        ev.preventDefault();
-    });
-}
+ctx0.canvas.addEventListener("pointercancel", function(ev) {
+    delete touches[ev.pointerId];
+    ev.preventDefault();
+});
