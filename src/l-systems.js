@@ -20,7 +20,7 @@ import {
     updateLinestyleSelect,
     updateSystemInput,
 } from "./ui.js";
-import { renderLines } from "./lines.js";
+import { updateLines } from "./lines.js";
 
 customElements.define("number-input", NumberInput, { extends: "input" });
 customElements.define("key-value-input", KeyValueInput);
@@ -482,7 +482,7 @@ function run(ctx0, ctx1, system, drawingParams = {}) {
     state = system["axiom"];
 
     const turtle = {
-        step: 10,
+        step: 1,
         heading: [0.0, -1.0],
         position: drawingParams["offset"] || [0, 0],
         angle: Math.PI / 180 * system["angle"],
@@ -509,8 +509,9 @@ function run(ctx0, ctx1, system, drawingParams = {}) {
 
     t0 = performance.now();
     const buffer = getLineSegmentBuffer(turtle);
-    renderLines(buffer, buffer.length / 8);
+    updateLines(buffer);
     console.log(performance.now() - t0);
+    console.log(buffer);
 
     show(stats);
 }
@@ -626,7 +627,6 @@ ctx0.canvas.addEventListener("wheel", function(ev) {
 
     system = system || parseSystem(getSystemInput());
     drawingParameters["zoom"] += ev.deltaY < 0 ? 0.1 : -0.1;
-    console.log(ev);
 
     if (!animate) {
         draw(ctx0,
