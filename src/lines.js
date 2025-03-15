@@ -51,7 +51,7 @@ const WEBGL_UNIFORM_SETTERS = {
 /**
  * @typedef {Object} GLProgramContainer
  * @property {WebGLProgram} program - WebGLProgram
- * @property {Object<string, number>} uniforms - uniform locations
+ * @property {Object<string, Object<string, number>>} uniforms - uniform locations and types
  * @property {Object<string, number>} attributes - attribute locations
  */
 
@@ -63,6 +63,13 @@ const WEBGL_UNIFORM_SETTERS = {
  * @property {number} offset
  * @property {number} divisor
  * @property {WebGLBuffer} buffer
+ */
+
+/**
+ * @typedef {Object} GLProgramInfo
+ * @property {string} vertexShaderSource
+ * @property {string} fragmentShaderSource
+ * @property {Object<string, number>} attributeBindings
  */
 
 /**
@@ -91,20 +98,18 @@ function compileShader(gl, source, type) {
  * Create a GLProgramContainer with a WebGLProgram and a map of uniforms inside.
  *
  * @param {WebGL2RenderingContext} gl
- * @param {string} vertexShaderSrc - vertex shader source code
- * @param {string} fragmentShaderSrc - fragment shader source code
- * @param {object} attribBindings - key-value map of attribute names to locations
+ * @param {GLProgramInfo} info
  *
  * @return {GLProgramContainer}
  */
-function createProgram(gl, vertexShaderSrc, fragmentShaderSrc, attribBindings) {
+function createProgram(gl, info) {
     const prog = gl.createProgram();
 
-    gl.attachShader(prog, compileShader(gl, vertexShaderSrc, gl.VERTEX_SHADER));
-    gl.attachShader(prog, compileShader(gl, fragmentShaderSrc, gl.FRAGMENT_SHADER));
+    gl.attachShader(prog, compileShader(gl, info.vertexShaderSource, gl.VERTEX_SHADER));
+    gl.attachShader(prog, compileShader(gl, info.fragmentShaderSource, gl.FRAGMENT_SHADER));
 
-    for (let attrib in attribBindings) {
-        gl.bindAttribLocation(prog, attribBindings[attrib], attrib);
+    for (const [attribute, location] of Object.entries(info.attributeBindings)) {
+        gl.bindAttribLocation(prog, location, attribute);
     }
 
     gl.linkProgram(prog);
@@ -113,15 +118,15 @@ function createProgram(gl, vertexShaderSrc, fragmentShaderSrc, attribBindings) {
         throw "Failed to create program: " + gl.getProgramInfoLog(prog);
     }
 
-    let uniforms = {};
+    const uniforms = {};
     const n = gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS);
     for (var i = 0; i < n; i++) {
         const uniform = gl.getActiveUniform(prog, i);
         const location = gl.getUniformLocation(prog, uniform.name);
-        uniforms[uniform.name] = [location, uniform.type];
+        uniforms[uniform.name] = { location: location, type: uniform.type };
     }
 
-    return { program: prog, uniforms: uniforms, attributes: attribBindings };
+    return { program: prog, uniforms: uniforms, attributes: info.attributeBindings };
 }
 
 /**
@@ -137,8 +142,8 @@ function setUniforms(gl, program, values) {
             console.log(`uniform '${key}' does not exist`);
             continue;
         }
-        const [location, type] = program.uniforms[key];
-        gl[WEBGL_UNIFORM_SETTERS[type]](location, values[key]);
+        const uniform = program.uniforms[key];
+        gl[WEBGL_UNIFORM_SETTERS[uniform.type]](uniform.location, values[key]);
     }
 }
 
@@ -239,7 +244,11 @@ function clearAll(gl, color) {
 /** @type {WebGL2RenderingContext} */
 const gl = document.querySelector("#glcanvas").getContext("webgl2");
 
-const prog = createProgram(gl, vertexShader, fragmentShader, { "a_vertex": 0, "a_p0": 1, "a_p1": 2, "a_color": 3 });
+const prog = createProgram(gl, {
+    vertexShaderSource: vertexShader,
+    fragmentShaderSource: fragmentShader,
+    attributeBindings: { "a_vertex": 0, "a_p0": 1, "a_p1": 2, "a_color": 3 },
+});
 
 const buffers = {
     "nodes": gl.createBuffer(),
@@ -294,8 +303,8 @@ gl.bufferData(gl.ARRAY_BUFFER, nodes, gl.STATIC_DRAW);
 gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 gl.useProgram(prog.program);
 
-gl.uniformMatrix4fv(prog.uniforms["u_proj"][0], false, math.identity(4));
-gl.uniformMatrix4fv(prog.uniforms["u_view"][0], false, math.identity(4));
+gl.uniformMatrix4fv(prog.uniforms["u_proj"]["location"], false, math.identity(4));
+gl.uniformMatrix4fv(prog.uniforms["u_view"]["location"], false, math.identity(4));
 
 function renderLines(data, instances) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers["points"]);
@@ -303,7 +312,7 @@ function renderLines(data, instances) {
 
     const r = 1 / 500;
     const view = math.translate(math.scale(math.identity(4), r, -r, 1.0), 0, -1.0, 0);
-    gl.uniformMatrix4fv(prog.uniforms["u_view"][0], false, view);
+    gl.uniformMatrix4fv(prog.uniforms["u_view"]["location"], false, view);
     setUniforms(gl, prog, { "u_width": 2.0 });
 
     gl.drawArraysInstanced(
