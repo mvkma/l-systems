@@ -20,6 +20,7 @@ import {
     updateLinestyleSelect,
     updateSystemInput,
 } from "./ui.js";
+import { renderLines } from "./lines.js";
 
 customElements.define("number-input", NumberInput, { extends: "input" });
 customElements.define("key-value-input", KeyValueInput);
@@ -31,7 +32,7 @@ const ctx0 = document.querySelector("#canvas0").getContext("2d");
 /** @type {CanvasRenderingContext2D} */
 const ctx1 = document.querySelector("#canvas1").getContext("2d");
 
-/** @type {string} */
+/** @type {import("./language.js").Symbol[]} */
 let state = null;
 
 /** @type {Object<string,any>} */
@@ -316,6 +317,99 @@ function draw(ctx, initialTurtle, drawingParams = {}) {
 }
 
 /**
+ * @param {WebGL2RenderingContext} gl
+ */
+function getLineSegmentBuffer(initialTurtle, drawingParams = {}) {
+    const stack = [];
+    const r = 1.0;
+
+    let turtle = new Float32Array([
+        initialTurtle["position"][0],
+        initialTurtle["position"][1],
+        initialTurtle["heading"][0],
+        initialTurtle["heading"][1],
+    ]);
+
+    const rotPos = rotationMatrix(initialTurtle["angle"]);
+    const rotNeg = rotationMatrix(-initialTurtle["angle"]);
+
+    const numLines = state.map(s => s.symbol).filter(k => k[0] >= "A" && k[0] <= "Z").length;
+
+    let pointData = new Float32Array(numLines * (4 + 4));
+    let pos = 0;
+
+    const addPoint = function(p) {
+        pointData[pos + 0] = p[0];
+        pointData[pos + 1] = p[1];
+        pos += 2;
+    }
+
+    const addColor = function(c) {
+        pointData[pos + 0] = c[0];
+        pointData[pos + 1] = c[1];
+        pointData[pos + 2] = c[2];
+        pointData[pos + 3] = c[3];
+        pos += 4;
+    }
+
+    const addSegment = function(p0, p1, color) {
+        addPoint(p0);
+        addPoint(p1);
+        addColor(color);
+    };
+
+    /** @type {(symbol: import("./language.js").Symbol) => void} */
+    const drawingStep = function(symbol) {
+        const symb = symbol.symbol;
+        const step = (symbol.values["s"] || initialTurtle["step"]) / r;
+
+        switch (symb) {
+        case "f":
+            turtle[0] = turtle[0] + step * turtle[2];
+            turtle[1] = turtle[1] + step * turtle[3];
+            break;
+        case "+":
+        case "-":
+            const heading = turtle.slice(2, 4);
+            const angle = symbol.values["a"];
+            let rotation;
+
+            if (angle === undefined) {
+                rotation = symb === "+" ? rotPos : rotNeg;
+            } else {
+                rotation = symb === "+" ? rotationMatrix(angle) : rotationMatrix(-angle);
+            }
+
+            turtle[2] = heading[0] * rotation[0][0] + heading[1] * rotation[0][1];
+            turtle[3] = heading[0] * rotation[1][0] + heading[1] * rotation[1][1];
+            break;
+        case "[":
+            stack.push(turtle.slice());
+            break;
+        case "]":
+            turtle = stack.pop();
+            break;
+        default:
+            const draw = (linestyles[symb] && linestyles[symb]["draw"]) || false;
+            if (!draw) {
+                break;
+            }
+            const p0 = turtle.slice(0, 2);
+            turtle[0] = turtle[0] + step * turtle[2];
+            turtle[1] = turtle[1] + step * turtle[3];
+            addSegment(p0, turtle.slice(0, 2), [1.0, 0.0, 0.0, 1.0]);
+            break;
+        }
+    };
+
+    for (const symbol of state) {
+        drawingStep(symbol);
+    }
+
+    return pointData;
+}
+
+/**
  * Count symbols and calculate stack depth
  *
  * @returns {Object}
@@ -412,6 +506,11 @@ function run(ctx0, ctx1, system, drawingParams = {}) {
     t0 = performance.now();
     draw(ctx0, turtle, drawingParams);
     stats["turtle"] = performance.now() - t0;
+
+    t0 = performance.now();
+    const buffer = getLineSegmentBuffer(turtle);
+    renderLines(buffer, buffer.length / 8);
+    console.log(performance.now() - t0);
 
     show(stats);
 }
