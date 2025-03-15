@@ -1,5 +1,7 @@
 import * as math from "./math.js";
 
+const BYTES_PER_FLOAT = Float32Array.BYTES_PER_ELEMENT;
+
 const vertexShader = `#version 300 es
 precision highp float;
 
@@ -51,6 +53,16 @@ const WEBGL_UNIFORM_SETTERS = {
  * @property {WebGLProgram} program - WebGLProgram
  * @property {Object<string, number>} uniforms - uniform locations
  * @property {Object<string, number>} attributes - attribute locations
+ */
+
+/**
+ * @typedef {Object} GLAttributeInfo
+ * @property {number} size
+ * @property {number} type
+ * @property {number} stride
+ * @property {number} offset
+ * @property {number} divisor
+ * @property {WebGLBuffer} buffer
  */
 
 /**
@@ -189,115 +201,121 @@ function createTexture(
     return texture;
 }
 
+/**
+ * @param {GLProgramContainer} prog
+ * @param {string} attribute
+ * @param {GLAttributeInfo} info
+ */
+function initVertexAttribute(prog, attribute, info) {
+    const location = prog.attributes[attribute];
+    gl.enableVertexAttribArray(location);
+    gl.vertexAttribPointer(location, info.size, info.type, false, info.stride, info.offset);
+    gl.vertexAttribDivisor(location, info.divisor);
+}
+
+/**
+ * @param {GLProgramContainer} prog
+ * @param {Object<string, GLAttributeInfo>} attributeInfo
+ */
+function setupVertexAttributes(prog, attributeInfo) {
+    for (const [attribute, info] of Object.entries(attributeInfo)) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, info.buffer);
+        initVertexAttribute(prog, attribute, info);
+    }
+}
+
+/**
+ * @param {WebGL2RenderingContext} gl
+ * @param {number[]} color
+ */
+function clearAll(gl, color) {
+    gl.clearColor(...color);
+    gl.clearDepth(1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+}
+
 /** @type {WebGL2RenderingContext} */
 const gl = document.querySelector("#glcanvas").getContext("webgl2");
 
-gl.clearColor(0.0, 0.0, 0.0, 1.0);
-gl.clearDepth(1.0);
-gl.enable(gl.DEPTH_TEST);
-gl.depthFunc(gl.LEQUAL);
-gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
 const prog = createProgram(gl, vertexShader, fragmentShader, { "a_vertex": 0, "a_p0": 1, "a_p1": 2, "a_color": 3 });
-const vao = gl.createVertexArray();
-gl.bindVertexArray(vao);
+
+const buffers = {
+    "nodes": gl.createBuffer(),
+    "points": gl.createBuffer(),
+};
+
+const bytesPerLine = (4 + 4) * BYTES_PER_FLOAT;
+
+/** @type {Object<string, GLAttributeInfo>} */
+const vertexAttributes = {
+    "a_vertex": {
+        size: 2,
+        type: gl.FLOAT,
+        stride: 0,
+        offset: 0,
+        divisor: 0,
+        buffer: buffers["nodes"],
+    },
+    "a_p0": {
+        size: 2,
+        type: gl.FLOAT,
+        stride: bytesPerLine,
+        offset: 0 * BYTES_PER_FLOAT,
+        divisor: 1,
+        buffer: buffers["points"],
+    },
+    "a_p1": {
+        size: 2,
+        type: gl.FLOAT,
+        stride: bytesPerLine,
+        offset: 2 * BYTES_PER_FLOAT,
+        divisor: 1,
+        buffer: buffers["points"],
+    },
+    "a_color": {
+        size: 4,
+        type: gl.FLOAT,
+        stride: bytesPerLine,
+        offset: 4 * BYTES_PER_FLOAT,
+        divisor: 1,
+        buffer: buffers["points"],
+    },
+};
+
+setupVertexAttributes(prog, vertexAttributes);
 
 // Instanced line segment
 const nodes = new Float32Array([0.0, -0.5, 1.0, -0.5, 1.0,  0.5, 0.0, -0.5, 1.0,  0.5, 0.0,  0.5]);
-const nodesBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, nodesBuffer);
+gl.bindBuffer(gl.ARRAY_BUFFER, buffers["nodes"]);
 gl.bufferData(gl.ARRAY_BUFFER, nodes, gl.STATIC_DRAW);
 
-gl.enableVertexAttribArray(prog.attributes["a_vertex"]);
-gl.vertexAttribPointer(prog.attributes["a_vertex"], 2, gl.FLOAT, false, 0, 0);
-gl.vertexAttribDivisor(prog.attributes["a_vertex"], 0);
-
-// Start and end points
-const numLines = 100;
-const pointsData = new Float32Array(numLines * (4 + 4));
-const pointsBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, pointsBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, pointsData.byteLength, gl.DYNAMIC_DRAW);
-
-const bytesPerLine = (4 + 4) * Float32Array.BYTES_PER_ELEMENT;
-gl.enableVertexAttribArray(prog.attributes["a_p0"]);
-gl.vertexAttribPointer(prog.attributes["a_p0"], 2, gl.FLOAT, false, bytesPerLine, 0 * Float32Array.BYTES_PER_ELEMENT);
-gl.vertexAttribDivisor(prog.attributes["a_p0"], 1);
-
-gl.enableVertexAttribArray(prog.attributes["a_p1"]);
-gl.vertexAttribPointer(prog.attributes["a_p1"], 2, gl.FLOAT, false, bytesPerLine, 2 * Float32Array.BYTES_PER_ELEMENT);
-gl.vertexAttribDivisor(prog.attributes["a_p1"], 1);
-
-gl.enableVertexAttribArray(prog.attributes["a_color"]);
-gl.vertexAttribPointer(prog.attributes["a_color"], 4, gl.FLOAT, false, bytesPerLine, 4 * Float32Array.BYTES_PER_ELEMENT);
-gl.vertexAttribDivisor(prog.attributes["a_color"], 1);
-
-// Render
 gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 gl.useProgram(prog.program);
-
-setUniforms(gl, prog, { "u_width": 0.005 });
-
-// const aspectRatio = (gl.canvas.width / gl.canvas.height);
-// const top = 0.1;
-// const projMat = math.perspectiveProjection(-top / aspectRatio, top / aspectRatio, -top, top, 0.1, 10);
-// 
-// const cameraPos = [0.0, 0.0, 1.5];
-// const target = [
-//     1.0 * Math.sin(60 * Math.PI / 180),
-//     -1.0 * Math.cos(60 * Math.PI / 180),
-//     0.0,
-// ];
-// const lookAt = math.lookAt(cameraPos, target, [0, 0, 1]);
-// const viewMat = math.rotateY(
-//     math.rotateX(
-//         math.scale(lookAt, 1, 1, 1/3),
-//         40 * Math.PI / 180
-//     ),
-//     0 * Math.PI / 180,
-// );
 
 gl.uniformMatrix4fv(prog.uniforms["u_proj"][0], false, math.identity(4));
 gl.uniformMatrix4fv(prog.uniforms["u_view"][0], false, math.identity(4));
 
-gl.bindVertexArray(vao);
+function renderLines(data, instances) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers["points"]);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
 
-function render() {
-    pointsData[0] = Math.random() * 2.0 - 1.0;
-    pointsData[1] = Math.random() * 2.0 - 1.0;
-    pointsData[2] = Math.random() * 2.0 - 1.0;
-    pointsData[3] = Math.random() * 2.0 - 1.0;
-
-    pointsData[4] = 0.2;
-    pointsData[5] = 0.2;
-    pointsData[6] = 0.2;
-    pointsData[7] = 1.0;
-
-    for (let i = 1; i < numLines; ++i) {
-        const offset = i * 8;
-        // start end end point
-        pointsData[offset + 0] = pointsData[offset - 2 - 4];
-        pointsData[offset + 1] = pointsData[offset - 1 - 4];
-        pointsData[offset + 2] = Math.random() * 2.0 - 1.0;
-        pointsData[offset + 3] = Math.random() * 2.0 - 1.0;
-        // color
-        pointsData[offset + 4] = 0.2 + i / numLines * 0.8;
-        pointsData[offset + 5] = 0.2 + i / numLines * 0.8;
-        pointsData[offset + 6] = 0.2 + i / numLines * 0.8;
-        pointsData[offset + 7] = 1.0;
-    }
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, pointsBuffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, pointsData);
+    const r = 1 / 500;
+    const view = math.translate(math.scale(math.identity(4), r, -r, 1.0), 0, -1.0, 0);
+    gl.uniformMatrix4fv(prog.uniforms["u_view"][0], false, view);
+    setUniforms(gl, prog, { "u_width": 2.0 });
 
     gl.drawArraysInstanced(
         gl.TRIANGLES,
         0,
         nodes.length / 2,
-        numLines,
+        instances,
     );
 }
 
-render();
+export {
+    renderLines,
+};
 
 
