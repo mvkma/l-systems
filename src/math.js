@@ -177,12 +177,12 @@ const scaling = function (x, y, z) {
 }
 
 /**
- * @param {number} r
- * @param {number} l
- * @param {number} t
- * @param {number} b
- * @param {number} n
- * @param {number} f
+ * @param {number} l - left
+ * @param {number} r - right
+ * @param {number} b - bottom
+ * @param {number} t - top
+ * @param {number} n - near
+ * @param {number} f - far
  *
  * @returns {Float32Array}
  */
@@ -194,6 +194,35 @@ const perspectiveProjection = function (l, r, b, t, n, f) {
         0.0, 0.0, -2.0 * f * n / (f - n), 0.0
     ]);
 }
+
+/**
+ * @param {number} l - left
+ * @param {number} r - right
+ * @param {number} b - bottom
+ * @param {number} t - top
+ * @param {number} n - near
+ * @param {number} f - far
+ *
+ * @returns {Float32Array}
+ */
+const orthographicProjection = function (l, r, b, t, n, f) {
+    const w = 1.0 / (r - l);
+	const h = 1.0 / (t - b);
+	const p = 1.0 / (f - n);
+
+	const x = (r + l) * w;
+	const y = (t + b) * h;
+
+	const z = (f + n) * p;
+	const zInv = -2 * p;
+
+    return new Float32Array([
+        2 * w, 0, 0, 0,
+        0, 2 * h, 0, 0,
+        0, 0, zInv, 0,
+        -x, -y, -z, 1
+    ]);
+};
 
 /**
  * @param {Object} camera
@@ -277,6 +306,7 @@ export {
     rotateZ,
     translate,
     scale,
+    orthographicProjection,
     perspectiveProjection,
     rotationX,
     rotationY,

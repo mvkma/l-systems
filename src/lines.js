@@ -1,3 +1,4 @@
+import { orthographicCamera } from "./camera.js";
 import * as math from "./math.js";
 
 const BYTES_PER_FLOAT = Float32Array.BYTES_PER_ELEMENT;
@@ -306,33 +307,32 @@ gl.useProgram(prog.program);
 gl.uniformMatrix4fv(prog.uniforms["u_proj"]["location"], false, math.identity(4));
 gl.uniformMatrix4fv(prog.uniforms["u_view"]["location"], false, math.identity(4));
 
-const drawingState = {
-    instances: undefined,
-    scale: 100,
-    view: math.identity(4),
-    proj: math.scaling(1.0, gl.canvas.width / gl.canvas.height, 1.0),
-};
+let instances = undefined;
 
-function setScale(delta) {
-    drawingState["scale"] += delta;
-    drawingState["view"] = math.translate(
-        math.scaling(1 / drawingState["scale"], -1 / drawingState["scale"], 1.0),
-        0.0,
-        -1.0,
-        0.0
-    );
-}
+const camera = orthographicCamera;
+
+camera.far = 1000;
+camera.zoom = 0.02;
+camera.updateProjection();
+camera.worldMatrix = math.scale(
+    math.translation(0.0, 50.0, -1.0),
+    1.0,
+    -1.0,
+    1.0
+);
+
+console.log(camera);
 
 function render() {
-    gl.uniformMatrix4fv(prog.uniforms["u_view"]["location"], false, drawingState["view"]);
-    gl.uniformMatrix4fv(prog.uniforms["u_proj"]["location"], false, drawingState["proj"]);
-    setUniforms(gl, prog, { "u_width": 2.0 });
+    gl.uniformMatrix4fv(prog.uniforms["u_view"]["location"], false, camera.worldMatrix);
+    gl.uniformMatrix4fv(prog.uniforms["u_proj"]["location"], false, camera.projectionMatrix);
+    setUniforms(gl, prog, { "u_width": 0.5 });
 
     gl.drawArraysInstanced(
         gl.TRIANGLES,
         0,
         nodes.length / 2,
-        drawingState["instances"],
+        instances,
     );
 }
 
@@ -340,20 +340,17 @@ function updateLines(data) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers["points"]);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
 
-    drawingState["instances"] = data.byteLength / bytesPerLine;
+    instances = data.byteLength / bytesPerLine;
 
     render();
 }
 
 gl.canvas.addEventListener("wheel", function(ev) {
-    setScale(ev.deltaY > 0 ? 2.0 : -2.0);
-    render();
     ev.preventDefault();
 });
 
 export {
     updateLines,
-    setScale,
 };
 
 
