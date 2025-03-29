@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import asyncio
-import signal
 import watchfiles
 
 from websockets.asyncio.server import broadcast, serve

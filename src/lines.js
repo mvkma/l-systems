@@ -1,4 +1,4 @@
-import { orthographicCamera } from "./camera.js";
+import { initDragControls, initZoomControls, orthographicCamera } from "./camera.js";
 import * as math from "./math.js";
 
 const BYTES_PER_FLOAT = Float32Array.BYTES_PER_ELEMENT;
@@ -313,14 +313,13 @@ const camera = orthographicCamera;
 
 camera.near = 0.01;
 camera.far = 1000;
-camera.zoom = 1.00;
+camera.zoom = 1.0;
 camera.updateProjection();
 camera.worldMatrix = math.identity(4);
 
 function render() {
     gl.uniformMatrix4fv(prog.uniforms["u_view"]["location"], false, camera.worldMatrix);
     gl.uniformMatrix4fv(prog.uniforms["u_proj"]["location"], false, camera.projectionMatrix);
-    setUniforms(gl, prog, { "u_width": 0.1 });
 
     gl.drawArraysInstanced(
         gl.TRIANGLES,
@@ -336,40 +335,29 @@ function updateLines(data, boundingBox) {
 
     instances = data.byteLength / bytesPerLine;
 
-    console.log(boundingBox);
     const dx = Math.abs(boundingBox[1] - boundingBox[0]);
     const dy = Math.abs(boundingBox[3] - boundingBox[2]);
-    const scale = dx > dy ? 1 / dy : 1 / dx;
-    const sx = (1.0 - dx * scale) / 2.0;
-    const sy = (1.0 - dy * scale) / 2.0;
-    const shiftX = -boundingBox[0] * scale / 2 + sx;
-    const shiftY = -boundingBox[2] * scale / 2 + sy;
-
-    console.log(`dx: ${dx}, dy: ${dy}, scale: ${scale}, sx: ${sx}, sy: ${sy}, shiftX: ${shiftX}, shiftY: ${shiftY}`);
+    const scale = 2.0 / Math.max(dx, dy);
+    const ratio = gl.canvas.height / gl.canvas.width;
+    console.log(scale);
 
     camera.zoom = 1.0;
-    camera.worldMatrix = math.translate(
-        math.scaling(scale / 2, -scale / 2, 1.0),
-        shiftX,
-        shiftY,
-        -1.0
+    camera.worldMatrix = math.scale(
+        math.translation(-boundingBox[0] - dx / 2, -boundingBox[2] - dy / 2, -1.0),
+        scale * ratio,
+        -scale,
+        1.0
     );
     camera.updateProjection();
+
+    setUniforms(gl, prog, { "u_width": 2.0 / scale / gl.canvas.width });
 
     render();
 }
 
-gl.canvas.addEventListener("wheel", function(ev) {
-    if (instances === undefined) {
-        return;
-    }
+initZoomControls(gl.canvas, camera, render);
 
-    camera.zoom += ev.deltaY < 0 ? 0.01 : -0.01;
-    camera.updateProjection();
-    render();
-
-    ev.preventDefault();
-});
+initDragControls(gl.canvas, camera, render);
 
 export {
     updateLines,
