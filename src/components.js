@@ -164,19 +164,20 @@ class RGBAInput extends HTMLElement {
         const val = parseInt(this.color.value.slice(1), 16);
         const rgb = [(val >> 16) % 256, (val >> 8) % 256, (val >> 0) % 256];
 
-        return `rgb(${rgb.join(" ")})`;
+        return rgb.map(n => n / 255);
     }
 
     getRgba() {
         const rgb = this.getRgb();
         const alpha = Math.max(Math.min(Math.floor(this.alpha.value), 100), 0);
-        return `rgb(${rgb.slice(4, -1)} / ${alpha}%)`;
+        return [...rgb, alpha / 100];
     }
 
     setRgba(rgba) {
-        const parts = rgba.slice(4, -1).split(" ");
-        const hex = parts.slice(0, 3).map(n => parseInt(n).toString(16).padStart(2, "0")).join("");
-        const alpha = parseInt(parts[4].slice(0, -1));
+        const hex = rgba.slice(0, 3)
+              .map(n => Math.floor(n * 255))
+              .map(n => n.toString(16).padStart(2, "0")).join("");
+        const alpha = rgba[3] * 100;
         this.color.value = `#${hex}`;
         this.alpha.setValue(alpha);
     }

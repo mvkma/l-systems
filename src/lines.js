@@ -243,7 +243,9 @@ function clearAll(gl, color) {
 }
 
 /** @type {WebGL2RenderingContext} */
-const gl = document.querySelector("#glcanvas").getContext("webgl2");
+const gl = document.querySelector("#glcanvas").getContext("webgl2", {
+    premultipliedAlpha: false
+});
 
 const prog = createProgram(gl, {
     vertexShaderSource: vertexShader,
@@ -301,6 +303,9 @@ const nodes = new Float32Array([0.0, -0.5, 1.0, -0.5, 1.0,  0.5, 0.0, -0.5, 1.0,
 gl.bindBuffer(gl.ARRAY_BUFFER, buffers["nodes"]);
 gl.bufferData(gl.ARRAY_BUFFER, nodes, gl.STATIC_DRAW);
 
+gl.enable(gl.BLEND);
+gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
 gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 gl.useProgram(prog.program);
 
@@ -350,7 +355,7 @@ function updateLines(data, boundingBox) {
     );
     camera.updateProjection();
 
-    setUniforms(gl, prog, { "u_width": 2.0 / scale / gl.canvas.width });
+    setUniforms(gl, prog, { "u_width": 2.0 / scale / gl.canvas.height });
 
     render();
 }

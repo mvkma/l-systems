@@ -14,6 +14,7 @@ import {
 } from "./language.js";
 
 import {
+    displayStatistics,
     getLinestyleInput,
     getSystemInput,
     updateLinestyleInput,
@@ -34,12 +35,12 @@ const linestyles = {
     "F": {
         draw: true,
         width: 1.0,
-        color: "rgb(255 0 0 / 100%)",
+        color: [1.0, 1.0, 0.0, 1.0],
         scale: 1.0,
         shadowOffsetX: 0.0,
         shadowOffsetY: 0.0,
         shadowBlur: 0.0,
-        shadowColor: "rgb(0 0 0 / 0%)",
+        shadowColor: [0.0, 0.0, 0.0, 1.0],
     }
 }
 
@@ -164,7 +165,7 @@ function getLineSegmentBuffer(initialTurtle) {
             const p0 = turtle.slice(0, 2);
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            addSegment(p0, turtle.slice(0, 2), [1.0, 0.0, 0.0, 1.0]);
+            addSegment(p0, turtle.slice(0, 2), linestyles[symb].color);
             break;
         }
     };
@@ -188,10 +189,9 @@ function computeStatistics() {
     const counts = {};
     let cur = 1;
     let depth = 1;
-    let symb;
 
     for (const c of state) {
-        symb = c["symbol"];
+        const symb = c.symbol;
         counts[symb] = counts[symb] + 1 || 0;
 
         if (symb === "[") {
@@ -209,34 +209,6 @@ function computeStatistics() {
         "depth": depth,
         "length": state.length,
     };
-}
-
-/**
- * Show statistics
- *
- * @param {Object} stats
- */
-function displayStatistics(stats) {
-    document.querySelector("#stats-length").textContent = stats["length"];
-    document.querySelector("#stats-depth").textContent = stats["depth"];
-
-    const dl = document.createElement("dl");
-    for (const k of Object.keys(stats["counts"]).sort()) {
-        const dt = document.createElement("dt");
-        const dd = document.createElement("dd");
-        dt.textContent = k;
-        dd.textContent = stats["counts"][k];
-        dl.appendChild(dt);
-        dl.appendChild(dd);
-    }
-
-    const counts = document.querySelector("#counts");
-    counts.removeChild(counts.firstChild);
-    counts.appendChild(dl);
-
-    document.querySelector("#timings-evolve").textContent = stats["evolve"] + " ms";
-    document.querySelector("#timings-turtle").textContent = stats["turtle"] + " ms";
-    document.querySelector("#timings-render").textContent = stats["render"] + " ms";
 }
 
 /**

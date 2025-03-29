@@ -145,7 +145,36 @@ function updateLinestyleSelect(system, linestyles) {
     symbolSelect.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+/**
+ * Show statistics
+ *
+ * @param {Object} stats
+ */
+function displayStatistics(stats) {
+    document.querySelector("#stats-length").textContent = stats["length"];
+    document.querySelector("#stats-depth").textContent = stats["depth"];
+
+    const dl = document.createElement("dl");
+    for (const k of Object.keys(stats["counts"]).sort()) {
+        const dt = document.createElement("dt");
+        const dd = document.createElement("dd");
+        dt.textContent = k;
+        dd.textContent = stats["counts"][k];
+        dl.appendChild(dt);
+        dl.appendChild(dd);
+    }
+
+    const counts = document.querySelector("#counts");
+    counts.removeChild(counts.firstChild);
+    counts.appendChild(dl);
+
+    document.querySelector("#timings-evolve").textContent = stats["evolve"] + " ms";
+    document.querySelector("#timings-turtle").textContent = stats["turtle"] + " ms";
+    document.querySelector("#timings-render").textContent = stats["render"] + " ms";
+}
+
 export {
+    displayStatistics,
     getLinestyleInput,
     getSystemInput,
     updateLinestyleInput,
