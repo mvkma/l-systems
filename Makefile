@@ -15,4 +15,4 @@ release: $(BUILDDIR) $(SRCS)
 	cp -rf  $(SRCS) $(BUILDDIR)
 
 serve:
-	python -m http.server --bind 127.0.0.1 -d . 8080
+	python -m http.server --bind 127.0.0.1 -d . 8080 & export HTTP_SERVER_PID=$$!; uv run reload.py; kill $${HTTP_SERVER_PID}
