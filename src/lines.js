@@ -3,6 +3,8 @@ import * as math from "./math.js";
 
 const BYTES_PER_FLOAT = Float32Array.BYTES_PER_ELEMENT;
 
+const BYTES_PER_LINE = (4 + 4 + 1) * BYTES_PER_FLOAT;
+
 const vertexShader = `#version 300 es
 precision highp float;
 
@@ -259,8 +261,6 @@ const buffers = {
     "points": gl.createBuffer(),
 };
 
-const bytesPerLine = (4 + 4 + 1) * BYTES_PER_FLOAT;
-
 /** @type {Object<string, GLAttributeInfo>} */
 const vertexAttributes = {
     "a_vertex": {
@@ -274,7 +274,7 @@ const vertexAttributes = {
     "a_p0": {
         size: 2,
         type: gl.FLOAT,
-        stride: bytesPerLine,
+        stride: BYTES_PER_LINE,
         offset: 0 * BYTES_PER_FLOAT,
         divisor: 1,
         buffer: buffers["points"],
@@ -282,7 +282,7 @@ const vertexAttributes = {
     "a_p1": {
         size: 2,
         type: gl.FLOAT,
-        stride: bytesPerLine,
+        stride: BYTES_PER_LINE,
         offset: 2 * BYTES_PER_FLOAT,
         divisor: 1,
         buffer: buffers["points"],
@@ -290,7 +290,7 @@ const vertexAttributes = {
     "a_color": {
         size: 4,
         type: gl.FLOAT,
-        stride: bytesPerLine,
+        stride: BYTES_PER_LINE,
         offset: 4 * BYTES_PER_FLOAT,
         divisor: 1,
         buffer: buffers["points"],
@@ -298,7 +298,7 @@ const vertexAttributes = {
     "a_width": {
         size: 1,
         type: gl.FLOAT,
-        stride: bytesPerLine,
+        stride: BYTES_PER_LINE,
         offset: 8 * BYTES_PER_FLOAT,
         divisor: 1,
         buffer: buffers["points"],
@@ -335,25 +335,19 @@ function render() {
     gl.uniformMatrix4fv(prog.uniforms["u_view"]["location"], false, camera.worldMatrix);
     gl.uniformMatrix4fv(prog.uniforms["u_proj"]["location"], false, camera.projectionMatrix);
 
-    gl.drawArraysInstanced(
-        gl.TRIANGLES,
-        0,
-        nodes.length / 2,
-        instances,
-    );
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, nodes.length / 2, instances);
 }
 
 function updateLines(data, boundingBox) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers["points"]);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
 
-    instances = data.byteLength / bytesPerLine;
+    instances = data.byteLength / BYTES_PER_LINE;
 
     const dx = Math.abs(boundingBox[1] - boundingBox[0]);
     const dy = Math.abs(boundingBox[3] - boundingBox[2]);
     const scale = 2.0 / Math.max(dx, dy);
     const ratio = gl.canvas.height / gl.canvas.width;
-    console.log(scale);
 
     camera.zoom = 1.0;
     camera.worldMatrix = math.scale(
@@ -374,6 +368,8 @@ initZoomControls(gl.canvas, camera, render);
 initDragControls(gl.canvas, camera, render);
 
 export {
+    BYTES_PER_FLOAT,
+    BYTES_PER_LINE,
     updateLines,
 };
 

@@ -21,7 +21,7 @@ import {
     updateLinestyleSelect,
     updateSystemInput,
 } from "./ui.js";
-import { updateLines } from "./lines.js";
+import { BYTES_PER_FLOAT, BYTES_PER_LINE, updateLines } from "./lines.js";
 
 customElements.define("number-input", NumberInput, { extends: "input" });
 customElements.define("key-value-input", KeyValueInput);
@@ -54,7 +54,7 @@ const linestyles = {
  */
 function rotationMatrix(angle) {
     return [
-        [Math.cos(angle), Math.sin(angle)],
+        [ Math.cos(angle), Math.sin(angle)],
         [-Math.sin(angle), Math.cos(angle)],
     ];
 }
@@ -81,7 +81,6 @@ function *generator(axiom, productions, n) {
  */
 function getLineSegmentBuffer(initialTurtle) {
     const stack = [];
-    const r = 1.0;
 
     let turtle = new Float32Array([
         initialTurtle["position"][0],
@@ -93,10 +92,13 @@ function getLineSegmentBuffer(initialTurtle) {
     const rotPos = rotationMatrix(initialTurtle["angle"]);
     const rotNeg = rotationMatrix(-initialTurtle["angle"]);
 
-    const numLines = state.map(s => s.symbol).filter(k => k[0] >= "A" && k[0] <= "Z").length;
+    const numLines = state
+          .map(s => s.symbol)
+          .filter(k => k[0] >= "A" && k[0] <= "Z")
+          .length;
 
     const boundingBox = new Float32Array([turtle[0], turtle[0], turtle[1], turtle[1]]);
-    const pointData = new Float32Array(numLines * (4 + 4 + 1));
+    const pointData = new Float32Array(numLines * BYTES_PER_LINE / BYTES_PER_FLOAT);
     let pos = 0;
 
     const updateBoundingBox = function(p) {
@@ -136,7 +138,7 @@ function getLineSegmentBuffer(initialTurtle) {
     /** @type {(symbol: import("./language.js").Symbol) => void} */
     const drawingStep = function(symbol) {
         const symb = symbol.symbol;
-        const step = (symbol.values["s"] || initialTurtle["step"]) / r;
+        const step = (symbol.values["s"] || initialTurtle["step"]);
 
         switch (symb) {
         case "f":
@@ -171,10 +173,11 @@ function getLineSegmentBuffer(initialTurtle) {
             if (!draw) {
                 break;
             }
+            const style = linestyles[symb];
             const p0 = turtle.slice(0, 2);
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            addSegment(p0, turtle.slice(0, 2), linestyles[symb].color, linestyles[symb].width);
+            addSegment(p0, turtle.slice(0, 2), style.color, style.width);
             break;
         }
     };
