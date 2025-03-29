@@ -158,8 +158,8 @@ function symb(s, parameters) {
     return function(bindings) {
         const values = {};
 
-        for (const [k, rpn] of Object.entries(parameters)) {
-            values[k] = evalRPN(rpn, bindings);
+        for (const k in parameters) {
+            values[k] = evalRPN(parameters[k], bindings);
         }
 
         return {
