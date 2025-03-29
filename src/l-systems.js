@@ -335,13 +335,22 @@ function getLineSegmentBuffer(initialTurtle, drawingParams = {}) {
 
     const numLines = state.map(s => s.symbol).filter(k => k[0] >= "A" && k[0] <= "Z").length;
 
-    let pointData = new Float32Array(numLines * (4 + 4));
+    const boundingBox = new Float32Array([turtle[0], turtle[0], turtle[1], turtle[1]]);
+    const pointData = new Float32Array(numLines * (4 + 4));
     let pos = 0;
+
+    const updateBoundingBox = function(p) {
+        boundingBox[0] = Math.min(boundingBox[0], p[0]);
+        boundingBox[1] = Math.max(boundingBox[1], p[0]);
+        boundingBox[2] = Math.min(boundingBox[2], p[1]);
+        boundingBox[3] = Math.max(boundingBox[3], p[1]);
+    }
 
     const addPoint = function(p) {
         pointData[pos + 0] = p[0];
         pointData[pos + 1] = p[1];
         pos += 2;
+        updateBoundingBox(p);
     }
 
     const addColor = function(c) {
@@ -406,7 +415,10 @@ function getLineSegmentBuffer(initialTurtle, drawingParams = {}) {
         drawingStep(symbol);
     }
 
-    return pointData;
+    return {
+        pointData: pointData,
+        boundingBox: boundingBox,
+    };
 }
 
 /**
@@ -508,10 +520,12 @@ function run(ctx0, ctx1, system, drawingParams = {}) {
     stats["turtle"] = performance.now() - t0;
 
     t0 = performance.now();
-    const buffer = getLineSegmentBuffer(turtle);
-    updateLines(buffer);
+
+    const { pointData, boundingBox }  = getLineSegmentBuffer(turtle);
+    updateLines(pointData, boundingBox);
+
     console.log(performance.now() - t0);
-    console.log(buffer);
+    console.log(boundingBox);
 
     show(stats);
 }

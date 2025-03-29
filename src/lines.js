@@ -311,22 +311,16 @@ let instances = undefined;
 
 const camera = orthographicCamera;
 
+camera.near = 0.01;
 camera.far = 1000;
-camera.zoom = 0.02;
+camera.zoom = 1.00;
 camera.updateProjection();
-camera.worldMatrix = math.scale(
-    math.translation(0.0, 50.0, -1.0),
-    1.0,
-    -1.0,
-    1.0
-);
-
-console.log(camera);
+camera.worldMatrix = math.identity(4);
 
 function render() {
     gl.uniformMatrix4fv(prog.uniforms["u_view"]["location"], false, camera.worldMatrix);
     gl.uniformMatrix4fv(prog.uniforms["u_proj"]["location"], false, camera.projectionMatrix);
-    setUniforms(gl, prog, { "u_width": 0.5 });
+    setUniforms(gl, prog, { "u_width": 0.1 });
 
     gl.drawArraysInstanced(
         gl.TRIANGLES,
@@ -336,16 +330,44 @@ function render() {
     );
 }
 
-function updateLines(data) {
+function updateLines(data, boundingBox) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers["points"]);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
 
     instances = data.byteLength / bytesPerLine;
 
+    console.log(boundingBox);
+    const dx = Math.abs(boundingBox[1] - boundingBox[0]);
+    const dy = Math.abs(boundingBox[3] - boundingBox[2]);
+    const scale = dx > dy ? 1 / dy : 1 / dx;
+    const sx = (1.0 - dx * scale) / 2.0;
+    const sy = (1.0 - dy * scale) / 2.0;
+    const shiftX = -boundingBox[0] * scale / 2 + sx;
+    const shiftY = -boundingBox[2] * scale / 2 + sy;
+
+    console.log(`dx: ${dx}, dy: ${dy}, scale: ${scale}, sx: ${sx}, sy: ${sy}, shiftX: ${shiftX}, shiftY: ${shiftY}`);
+
+    camera.zoom = 1.0;
+    camera.worldMatrix = math.translate(
+        math.scaling(scale / 2, -scale / 2, 1.0),
+        shiftX,
+        shiftY,
+        -1.0
+    );
+    camera.updateProjection();
+
     render();
 }
 
 gl.canvas.addEventListener("wheel", function(ev) {
+    if (instances === undefined) {
+        return;
+    }
+
+    camera.zoom += ev.deltaY < 0 ? 0.01 : -0.01;
+    camera.updateProjection();
+    render();
+
     ev.preventDefault();
 });
 
