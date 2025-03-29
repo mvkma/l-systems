@@ -36,7 +36,6 @@ const linestyles = {
         draw: true,
         width: 1.0,
         color: [1.0, 1.0, 0.0, 1.0],
-        scale: 1.0,
         shadowOffsetX: 0.0,
         shadowOffsetY: 0.0,
         shadowBlur: 0.0,
@@ -95,7 +94,7 @@ function getLineSegmentBuffer(initialTurtle) {
     const numLines = state.map(s => s.symbol).filter(k => k[0] >= "A" && k[0] <= "Z").length;
 
     const boundingBox = new Float32Array([turtle[0], turtle[0], turtle[1], turtle[1]]);
-    const pointData = new Float32Array(numLines * (4 + 4));
+    const pointData = new Float32Array(numLines * (4 + 4 + 1));
     let pos = 0;
 
     const updateBoundingBox = function(p) {
@@ -120,10 +119,16 @@ function getLineSegmentBuffer(initialTurtle) {
         pos += 4;
     }
 
-    const addSegment = function(p0, p1, color) {
+    const addWidth = function(w) {
+        pointData[pos] = w;
+        pos += 1;
+    }
+
+    const addSegment = function(p0, p1, color, width) {
         addPoint(p0);
         addPoint(p1);
         addColor(color);
+        addWidth(width);
     };
 
     /** @type {(symbol: import("./language.js").Symbol) => void} */
@@ -165,7 +170,7 @@ function getLineSegmentBuffer(initialTurtle) {
             const p0 = turtle.slice(0, 2);
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            addSegment(p0, turtle.slice(0, 2), linestyles[symb].color);
+            addSegment(p0, turtle.slice(0, 2), linestyles[symb].color, linestyles[symb].width);
             break;
         }
     };

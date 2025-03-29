@@ -11,7 +11,6 @@ const systemControls = {
 const styleControls = {
     draw: document.querySelector("#style-input-draw"),
     width: document.querySelector("#style-input-width"),
-    scale: document.querySelector("#style-input-scale"),
     color: document.querySelector("#style-input-color"),
     shadowOffsetX: document.querySelector("#style-input-shadow-offset-x"),
     shadowOffsetY: document.querySelector("#style-input-shadow-offset-y"),
@@ -23,12 +22,11 @@ const styleControls = {
 const defaultLineStyle = {
     draw: false,
     width: 1.0,
-    color: "rgb(255 0 0 / 100%)",
-    scale: 1.0,
+    color: [1.0, 0.0, 0.0, 1.0],
     shadowOffsetX: 0.0,
     shadowOffsetY: 0.0,
     shadowBlur: 0.0,
-    shadowColor: "rgb(0 0 0 / 0%)",
+    shadowColor: [1.0, 0.0, 0.0, 1.0],
 };
 
 /**
@@ -40,7 +38,6 @@ function updateLinestyleInput(linestyles) {
     const linestyle = linestyles[document.querySelector("#symbol-select").value];
     styleControls["draw"].checked = linestyle["draw"];
     styleControls["width"].setValue(linestyle["width"]);
-    styleControls["scale"].setValue(linestyle["scale"]);
     styleControls["color"].setRgba(linestyle["color"]);
     styleControls["shadowOffsetX"].setValue(linestyle["shadowOffsetX"]);
     styleControls["shadowOffsetY"].setValue(linestyle["shadowOffsetY"]);
@@ -75,7 +72,6 @@ function getLinestyleInput() {
     return {
         draw: styleControls["draw"].checked,
         width: styleControls["width"].getValue(),
-        scale: styleControls["scale"].getValue(),
         color: styleControls["color"].getRgba(),
         shadowOffsetX: styleControls["shadowOffsetX"].getValue(),
         shadowOffsetY: styleControls["shadowOffsetY"].getValue(),

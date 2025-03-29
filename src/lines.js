@@ -10,6 +10,7 @@ in vec2 a_vertex;
 in vec2 a_p0;
 in vec2 a_p1;
 in vec4 a_color;
+in float a_width;
 
 uniform float u_width;
 uniform mat4 u_proj;
@@ -21,7 +22,7 @@ void main() {
   vec2 v = a_p1 - a_p0;
   vec2 u = normalize(vec2(-v.y, v.x));
 
-  gl_Position = u_proj * u_view * vec4(a_p0 + v * a_vertex.x + u * u_width * a_vertex.y, 0.0, 1.0);
+  gl_Position = u_proj * u_view * vec4(a_p0 + v * a_vertex.x + u * u_width * a_vertex.y * a_width, 0.0, 1.0);
 
   v_color = a_color;
 }
@@ -244,13 +245,13 @@ function clearAll(gl, color) {
 
 /** @type {WebGL2RenderingContext} */
 const gl = document.querySelector("#glcanvas").getContext("webgl2", {
-    premultipliedAlpha: false
+    premultipliedAlpha: true,
 });
 
 const prog = createProgram(gl, {
     vertexShaderSource: vertexShader,
     fragmentShaderSource: fragmentShader,
-    attributeBindings: { "a_vertex": 0, "a_p0": 1, "a_p1": 2, "a_color": 3 },
+    attributeBindings: { "a_vertex": 0, "a_p0": 1, "a_p1": 2, "a_color": 3, "a_width": 4 },
 });
 
 const buffers = {
@@ -258,7 +259,7 @@ const buffers = {
     "points": gl.createBuffer(),
 };
 
-const bytesPerLine = (4 + 4) * BYTES_PER_FLOAT;
+const bytesPerLine = (4 + 4 + 1) * BYTES_PER_FLOAT;
 
 /** @type {Object<string, GLAttributeInfo>} */
 const vertexAttributes = {
@@ -291,6 +292,14 @@ const vertexAttributes = {
         type: gl.FLOAT,
         stride: bytesPerLine,
         offset: 4 * BYTES_PER_FLOAT,
+        divisor: 1,
+        buffer: buffers["points"],
+    },
+    "a_width": {
+        size: 1,
+        type: gl.FLOAT,
+        stride: bytesPerLine,
+        offset: 8 * BYTES_PER_FLOAT,
         divisor: 1,
         buffer: buffers["points"],
     },
