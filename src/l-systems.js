@@ -27,6 +27,8 @@ customElements.define("number-input", NumberInput, { extends: "input" });
 customElements.define("key-value-input", KeyValueInput);
 customElements.define("rgba-input", RGBAInput);
 
+const RAD_PER_DEG = Math.PI / 180;
+
 /** @type {import("./language.js").Symbol[]} */
 let state = null;
 
@@ -150,7 +152,9 @@ function getLineSegmentBuffer(initialTurtle) {
             if (angle === undefined) {
                 rotation = symb === "+" ? rotPos : rotNeg;
             } else {
-                rotation = symb === "+" ? rotationMatrix(angle) : rotationMatrix(-angle);
+                rotation = symb === "+" ?
+                    rotationMatrix( angle * RAD_PER_DEG) :
+                    rotationMatrix(-angle * RAD_PER_DEG);
             }
 
             turtle[2] = heading[0] * rotation[0][0] + heading[1] * rotation[0][1];
