@@ -3,14 +3,14 @@ import * as math from "./math.js";
 
 const BYTES_PER_FLOAT = Float32Array.BYTES_PER_ELEMENT;
 
-const BYTES_PER_LINE = (4 + 4 + 1) * BYTES_PER_FLOAT;
+const BYTES_PER_LINE = (6 + 4 + 1) * BYTES_PER_FLOAT;
 
 const vertexShader = `#version 300 es
 precision highp float;
 
 in vec2 a_vertex;
-in vec2 a_p0;
-in vec2 a_p1;
+in vec3 a_p0;
+in vec3 a_p1;
 in vec4 a_color;
 in float a_width;
 
@@ -21,10 +21,10 @@ uniform mat4 u_view;
 out vec4 v_color;
 
 void main() {
-  vec2 v = a_p1 - a_p0;
+  vec2 v = a_p1.xy - a_p0.xy;
   vec2 u = normalize(vec2(-v.y, v.x));
 
-  gl_Position = u_proj * u_view * vec4(a_p0 + v * a_vertex.x + u * u_width * a_vertex.y * a_width, 0.0, 1.0);
+  gl_Position = u_proj * u_view * vec4(a_p0.xy + v * a_vertex.x + u * u_width * a_vertex.y * a_width, 0.0, 1.0);
 
   v_color = a_color;
 }
@@ -272,7 +272,7 @@ const vertexAttributes = {
         buffer: buffers["nodes"],
     },
     "a_p0": {
-        size: 2,
+        size: 3,
         type: gl.FLOAT,
         stride: BYTES_PER_LINE,
         offset: 0 * BYTES_PER_FLOAT,
@@ -280,10 +280,10 @@ const vertexAttributes = {
         buffer: buffers["points"],
     },
     "a_p1": {
-        size: 2,
+        size: 3,
         type: gl.FLOAT,
         stride: BYTES_PER_LINE,
-        offset: 2 * BYTES_PER_FLOAT,
+        offset: 3 * BYTES_PER_FLOAT,
         divisor: 1,
         buffer: buffers["points"],
     },
@@ -291,7 +291,7 @@ const vertexAttributes = {
         size: 4,
         type: gl.FLOAT,
         stride: BYTES_PER_LINE,
-        offset: 4 * BYTES_PER_FLOAT,
+        offset: 6 * BYTES_PER_FLOAT,
         divisor: 1,
         buffer: buffers["points"],
     },
@@ -299,7 +299,7 @@ const vertexAttributes = {
         size: 1,
         type: gl.FLOAT,
         stride: BYTES_PER_LINE,
-        offset: 8 * BYTES_PER_FLOAT,
+        offset: 10 * BYTES_PER_FLOAT,
         divisor: 1,
         buffer: buffers["points"],
     },
@@ -353,7 +353,7 @@ function updateLines(data, boundingBox) {
     camera.worldMatrix = math.scale(
         math.translation(-boundingBox[0] - dx / 2, -boundingBox[2] - dy / 2, -1.0),
         scale * ratio,
-        -scale,
+        scale,
         1.0
     );
     camera.updateProjection();

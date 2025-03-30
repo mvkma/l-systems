@@ -79,18 +79,6 @@ const systems = [
         },
     },
     {
-        angle: 25,
-        axiom: ["F"],
-        level: 2,
-        productions: {
-            "F": [
-                "F[+F]F[-F]F",
-                "F[+F]F",
-                "F[-F]F",
-            ],
-        },
-    },
-    {
         angle: 60,
         axiom: ["F"],
         level: 4,
@@ -123,6 +111,23 @@ const systems = [
         },
         consts: {
             r: 1.456,
+        },
+    },
+    {
+        angle: 45,
+        axiom: ["!(1.0)", "F(200.0)", "<(45.0)", "A"],
+        level: 3,
+        productions: {
+            "A": "!(f)F(50.0)[&(d)F(50.0)A]<(b)[&(d)F(50.0)A]<(c)[&(d)F(50.0)A]",
+            "F(s)": "F(s*e)",
+            "!(w)": "!(w*f)",
+        },
+        consts: {
+            b: 94.74,
+            c: 132.63,
+            d: 18.95,
+            e: 1.109,
+            f: 1.732,
         },
     },
 ];

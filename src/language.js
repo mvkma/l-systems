@@ -329,6 +329,10 @@ function parseSystem(text) {
     const positionMap = {
         "+": ["a"],
         "-": ["a"],
+        "&": ["a"],
+        "^": ["a"],
+        ">": ["a"],
+        "<": ["a"],
         "!": ["w"],
     };
     for (const lhs of Object.keys(json["productions"])) {
