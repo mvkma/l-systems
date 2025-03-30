@@ -135,6 +135,8 @@ function getLineSegmentBuffer(initialTurtle) {
         addWidth(width);
     };
 
+    const tmp = new Float32Array([0, 0]);
+
     /** @type {(symbol: import("./language.js").Symbol) => void} */
     const drawingStep = function(symbol) {
         const symb = symbol.symbol;
@@ -147,7 +149,8 @@ function getLineSegmentBuffer(initialTurtle) {
             break;
         case "+":
         case "-":
-            const heading = turtle.slice(2, 4);
+            tmp[0] = turtle[2];
+            tmp[1] = turtle[3];
             const angle = symbol.values["a"];
             let rotation;
 
@@ -159,8 +162,8 @@ function getLineSegmentBuffer(initialTurtle) {
                     rotationMatrix(-angle * RAD_PER_DEG);
             }
 
-            turtle[2] = heading[0] * rotation[0][0] + heading[1] * rotation[0][1];
-            turtle[3] = heading[0] * rotation[1][0] + heading[1] * rotation[1][1];
+            turtle[2] = tmp[0] * rotation[0][0] + tmp[1] * rotation[0][1];
+            turtle[3] = tmp[0] * rotation[1][0] + tmp[1] * rotation[1][1];
             break;
         case "[":
             stack.push(turtle.slice());
@@ -174,10 +177,11 @@ function getLineSegmentBuffer(initialTurtle) {
                 break;
             }
             const style = linestyles[symb];
-            const p0 = turtle.slice(0, 2);
+            tmp[0] = turtle[0];
+            tmp[1] = turtle[1];
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            addSegment(p0, turtle.slice(0, 2), style.color, style.width);
+            addSegment(tmp, turtle, style.color, style.width);
             break;
         }
     };
