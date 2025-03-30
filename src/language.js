@@ -325,6 +325,7 @@ function parseSystem(text) {
         symbols: new Set(),
     };
 
+    /** @type {Object<string, string[]>} */
     const positionMap = {
         "+": ["a"],
         "-": ["a"],
@@ -333,42 +334,46 @@ function parseSystem(text) {
         positionMap[lhs[0]] = getParameters(lhs);
     }
 
-    let symb, params, values;
     for (const [lhs, rhs] of Object.entries(json["productions"])) {
-        symb = lhs[0];
-        system["rules"][symb] = parseRuleString(positionMap, rhs);
-        system["symbols"].add(symb);
-        system["symbols"] = system["symbols"].union(new Set(rhs));
+        const symb = lhs[0];
+        system.rules[symb] = parseRuleString(positionMap, rhs);
+        system.symbols.add(symb);
+        system.symbols = system.symbols.union(new Set(rhs));
     }
 
     for (const s of json["axiom"]) {
-        symb = s[0];
-        values = getParameters(s);
-        params = positionMap[symb];
-        system["axiom"].push({ symbol: symb, values: {} });
+        const symb = s[0];
+        const values = getParameters(s);
+        const params = positionMap[symb];
+
+        /** @type {Symbol} */
+        const current = { symbol: symb, values: {} };
 
         if (values.length === 0) {
+            system.axiom.push(current);
             continue;
         }
 
         if (params !== undefined) {
             for (let i = 0; i < params.length; i++) {
-                system["axiom"][system["axiom"].length - 1]["values"][params[i]] = parseFloat(values[i]);
+                current.values[params[i]] = parseFloat(values[i]);
             }
         } else {
             switch (symb) {
             case "F":
             case "f":
-                system["axiom"][system["axiom"].length - 1]["values"]["s"] = parseFloat(values[0]);
+                current.values["s"] = parseFloat(values[0]);
                 break;
             case "+":
             case "-":
-                system["axiom"][system["axiom"].length - 1]["values"]["a"] = parseFloat(values[0]);
+                current.values["a"] = parseFloat(values[0]);
                 break;
             default:
                 break;
             }
         }
+
+        system.axiom.push(current);
     }
 
     return system;
