@@ -329,6 +329,7 @@ function parseSystem(text) {
     const positionMap = {
         "+": ["a"],
         "-": ["a"],
+        "!": ["w"],
     };
     for (const lhs of Object.keys(json["productions"])) {
         positionMap[lhs[0]] = getParameters(lhs);
@@ -367,6 +368,9 @@ function parseSystem(text) {
             case "+":
             case "-":
                 current.values["a"] = parseFloat(values[0]);
+                break;
+            case "!":
+                current.values["w"] = parseFloat(values[0]);
                 break;
             default:
                 break;

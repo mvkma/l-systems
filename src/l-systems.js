@@ -87,6 +87,7 @@ function getLineSegmentBuffer(initialTurtle) {
         initialTurtle["position"][1],
         initialTurtle["heading"][0],
         initialTurtle["heading"][1],
+        1.0,
     ]);
 
     const rotPos = rotationMatrix(initialTurtle["angle"]);
@@ -171,6 +172,9 @@ function getLineSegmentBuffer(initialTurtle) {
         case "]":
             turtle = stack.pop();
             break;
+        case "!":
+            turtle[4] = symbol.values["w"] || 1.0;
+            break;
         default:
             const draw = (linestyles[symb] && linestyles[symb]["draw"]) || false;
             if (!draw) {
@@ -181,7 +185,7 @@ function getLineSegmentBuffer(initialTurtle) {
             tmp[1] = turtle[1];
             turtle[0] = turtle[0] + step * turtle[2];
             turtle[1] = turtle[1] + step * turtle[3];
-            addSegment(tmp, turtle, style.color, style.width);
+            addSegment(tmp, turtle, style.color, style.width * turtle[4]);
             break;
         }
     };
