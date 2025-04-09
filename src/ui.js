@@ -5,6 +5,7 @@ const systemControls = {
     axiom: document.querySelector("#system-input-axiom"),
     rules: document.querySelector("#system-input-rules"),
     consts: document.querySelector("#system-input-consts"),
+    tropism: document.querySelector("#system-input-tropism"),
 };
 
 /** @type {Object<string,HTMLElement>} */
@@ -54,6 +55,7 @@ function updateSystemInput(system) {
     systemControls["angle"].setValue(system["angle"]);
     systemControls["level"].setValue(system["level"]);
 
+    systemControls["tropism"].value = system["tropism"].join(",");
     systemControls["axiom"].value = system["axiom"].join(" ");
 
     systemControls["rules"].setData(system["productions"]);
@@ -92,6 +94,7 @@ function getSystemInput() {
         axiom: systemControls["axiom"].value.split(" ").filter(s => s.length > 0),
         productions: systemControls["rules"].getData(),
         consts: systemControls["consts"].getData(),
+        tropism: systemControls["tropism"].value.split(",").map(s => parseFloat(s.trim())),
     };
 }
 

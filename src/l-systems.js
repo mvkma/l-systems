@@ -79,6 +79,19 @@ function matMul(A, B, C) {
 }
 
 /**
+ * Cross product
+ *
+ * @param {Float32Array} v
+ * @param {Float32Array} w
+ * @param {Float32Array} target 
+ */
+function cross(v, w, target) {
+    target[0] = v[1] * w[2] - v[2] * w[1];
+    target[1] = v[2] * w[0] - v[0] * w[2];
+    target[2] = v[0] * w[1] - v[1] * w[0];
+}
+
+/**
  * Rotation around x axis
  *
  * @param {number} radians - angle in radians
@@ -142,6 +155,8 @@ function getLineSegmentBuffer3D(system) {
         orientation: new Float32Array([0, 1, 0, 1, 0, 0, 0, 0, 1]),
         linewidth: 1.0,
     };
+
+    const tropism = new Float32Array(system.tropism);
 
     const rotations = {
         "+": (a) => rotationZ( a),
@@ -234,7 +249,8 @@ function getLineSegmentBuffer3D(system) {
             }
 
             matMul(turtle3D.orientation, rotation, tmpMat);
-            turtle3D.orientation = tmpMat;
+            // turtle3D.orientation = tmpMat;
+            turtle3D.orientation.set(tmpMat);
             break;
         case "[":
             // TODO: Should be a better way to do this
@@ -261,6 +277,18 @@ function getLineSegmentBuffer3D(system) {
             turtle3D.position[1] = turtle3D.position[1] + step * turtle3D.orientation[3];
             turtle3D.position[2] = turtle3D.position[2] + step * turtle3D.orientation[6];
             addSegment(tmpVec, turtle3D.position, style.color, style.width * turtle3D.linewidth);
+
+            // tropism
+            tmpVec[0] = turtle3D.orientation[0];
+            tmpVec[1] = turtle3D.orientation[3];
+            tmpVec[2] = turtle3D.orientation[6];
+            cross(tmpVec, tropism, tmpMat);
+            const alpha = Math.sqrt(tmpMat[0] * tmpMat[0] +
+                                    tmpMat[1] * tmpMat[1] +
+                                    tmpMat[2] * tmpMat[2]);
+            // FIXME: this is wrong
+            matMul(turtle3D.orientation, rotationY(alpha), tmpMat);
+            turtle3D.orientation.set(tmpMat);
             break;
         }
     };

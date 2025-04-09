@@ -11,6 +11,7 @@ const systems = [
     {
         angle: 25,
         axiom: ["F"],
+        tropism: [0, 0, 0],
         level: 4,
         productions: {
             "F": "F[+F]F[-F]F",
@@ -19,6 +20,7 @@ const systems = [
     {
         angle: 25,
         axiom: ["X"],
+        tropism: [0, 0, 0],
         level: 6,
         productions: {
             "F": "FF",
@@ -28,6 +30,7 @@ const systems = [
     {
         angle: 90,
         axiom: ["F", "-", "F", "-", "F", "-", "F"],
+        tropism: [0, 0, 0],
         level: 3,
         productions: {
             "F": "F-F+F+FF-F-F+F",
@@ -36,6 +39,7 @@ const systems = [
     {
         angle: 90,
         axiom: ["-", "F"],
+        tropism: [0, 0, 0],
         level: 3,
         productions: {
             "F": "F+F-F-F+F",
@@ -44,6 +48,7 @@ const systems = [
     {
         angle: 90,
         axiom: ["F", "+", "F", "+", "F", "+", "F"],
+        tropism: [0, 0, 0],
         level: 2,
         productions: {
             "F": "F+f-FF+F+FF+Ff+FF-f+FF-F-FF-Ff-FFF",
@@ -53,6 +58,7 @@ const systems = [
     {
         angle: 90,
         axiom: ["F", "-", "F", "-", "F", "-", "F"],
+        tropism: [0, 0, 0],
         level: 3,
         productions: {
             "F": "FF-F+F-F-FF",
@@ -61,6 +67,7 @@ const systems = [
     {
         angle: 90,
         axiom: ["-", "L"],
+        tropism: [0, 0, 0],
         level: 4,
         productions: {
             "F": "F",
@@ -71,6 +78,7 @@ const systems = [
     {
         angle: 90,
         axiom: ["L"],
+        tropism: [0, 0, 0],
         level: 4,
         productions: {
             "F": "F",
@@ -81,6 +89,7 @@ const systems = [
     {
         angle: 60,
         axiom: ["F"],
+        tropism: [0, 0, 0],
         level: 4,
         productions: {
             "F": "F+G++G-F--FF-G+",
@@ -90,6 +99,7 @@ const systems = [
     {
         angle: 86,
         axiom: ["-(90)", "F(1.0)"],
+        tropism: [0, 0, 0],
         level: 6,
         productions: {
             "F(s)": "F(s*p)+F(s*h)--F(s*h)+F(s*q)",
@@ -104,6 +114,7 @@ const systems = [
     {
         angle: 85,
         axiom: ["A(1.0)"],
+        tropism: [0, 0, 0],
         level: 5,
         productions: {
             "F(s)": "F(s)",
@@ -116,7 +127,8 @@ const systems = [
     {
         angle: 45,
         axiom: ["!(1.0)", "F(200.0)", "<(45.0)", "A"],
-        level: 3,
+        tropism: [0, -0.22, 0],
+        level: 6,
         productions: {
             "A": "!(f)F(50.0)[&(d)F(50.0)A]<(b)[&(d)F(50.0)A]<(c)[&(d)F(50.0)A]",
             "F(s)": "F(s*e)",

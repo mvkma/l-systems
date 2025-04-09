@@ -16,6 +16,7 @@
  * @property {Object<string, Rule>} rules
  * @property {Symbol[]} axiom
  * @property {Set<string>} symbols
+ * @property {[number,number,number]} tropism
  */
 
 /**
@@ -323,6 +324,7 @@ function parseSystem(text) {
         rules: {},
         axiom: [],
         symbols: new Set(),
+        tropism: json["tropism"],
     };
 
     /** @type {Object<string, string[]>} */
