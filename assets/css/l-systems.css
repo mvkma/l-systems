@@ -102,6 +102,10 @@ textarea {
     resize: vertical;
 }
 
+.key-value-input {
+    margin-right: 1.0rem;
+}
+
 .kv-entry {
     display: flex;
 }
@@ -124,6 +128,7 @@ textarea {
     display: flex;
     float: right;
     width: 200px;
+    margin-right: 1.0rem;
 }
 
 .rgba-input-color {
