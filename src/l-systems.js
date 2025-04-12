@@ -14,7 +14,9 @@ import {
 } from "./language.js";
 
 import {
+    connectUpdateHandler,
     displayStatistics,
+    getGeneralInput,
     getLinestyleInput,
     getSystemInput,
     updateLinestyleInput,
@@ -335,14 +337,8 @@ function timeIt(func) {
  * @param {import("./language.js").ParsedSystem} system
  */
 function run(system) {
-    const turtle = {
-        step: 1,
-        heading: [0.0, -1.0],
-        position: [0, 0],
-        angle: Math.PI / 180 * system.angle,
-    }
-
     let pointBuffer, boundingBox;
+    const background = getGeneralInput()["background"];
     const timings = {};
 
     timings["evolve"] = timeIt(() => {
@@ -356,7 +352,7 @@ function run(system) {
     });
 
     timings["render"] = timeIt(() => {
-        updateLines(pointBuffer, boundingBox);
+        updateLines(pointBuffer, boundingBox, background);
     });
 
     displayStatistics({...timings, ...computeStatistics()});
@@ -390,12 +386,24 @@ document.querySelector("#view-controls").querySelectorAll("input, rgba-input").f
     });
 });
 
+function render() {
+    system = parseSystem(getSystemInput());
+    run(system);
+    updateLinestyleSelect(system, linestyles);
+}
+
+const liveUpdateCheckbox = document.querySelector("#general-input-live");
+
+connectUpdateHandler(() => {
+    if (liveUpdateCheckbox.checked) {
+        render();
+    }
+});
+
 window.addEventListener("keydown", function(ev) {
     if (ev.key === "Enter" && ev.shiftKey) {
         ev.preventDefault();
-        system = parseSystem(getSystemInput());
-        run(system);
-        updateLinestyleSelect(system, linestyles);
+        render();
     }
 });
 

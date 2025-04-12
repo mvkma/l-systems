@@ -15,6 +15,11 @@ const styleControls = {
     color: document.querySelector("#style-input-color"),
 };
 
+/** @type {Object<string,HTMLElement>} */
+const generalControls = {
+    background: document.querySelector("#general-input-background"),
+}
+
 /** @type {Object<string,any>} */
 const defaultLineStyle = {
     draw: false,
@@ -79,6 +84,17 @@ function getSystemInput() {
         productions: systemControls["rules"].getData(),
         consts: systemControls["consts"].getData(),
         tropism: systemControls["tropism"].value.split(",").map(s => parseFloat(s.trim())),
+    };
+}
+
+/**
+ * Read general inputs from UI
+ *
+ * @returns {Object<string,any>}
+ */
+function getGeneralInput() {
+    return {
+        background: generalControls["background"].getRgb(),
     };
 }
 
@@ -156,11 +172,29 @@ function displayStatistics(stats) {
     document.querySelector("#timings-render").textContent = stats["render"] + " ms";
 }
 
+/**
+ * @param {() => void} callback
+ */
+function connectUpdateHandler(callback) {
+    systemControls["angle"].addEventListener("input", () => callback());
+    systemControls["level"].addEventListener("input", () => callback());
+    systemControls["axiom"].addEventListener("input", () => callback());
+    systemControls["rules"].addEventListener("input", () => callback());
+    systemControls["consts"].addEventListener("input", () => callback());
+    systemControls["tropism"].addEventListener("input", () => callback());
+
+    styleControls["draw"].addEventListener("input", () => callback());
+    styleControls["width"].addEventListener("input", () => callback());
+    styleControls["color"].addEventListener("input", () => callback());
+}
+
 export {
     displayStatistics,
     getLinestyleInput,
     getSystemInput,
+    getGeneralInput,
     updateLinestyleInput,
     updateLinestyleSelect,
     updateSystemInput,
+    connectUpdateHandler,
 };

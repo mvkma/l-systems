@@ -35,12 +35,6 @@
           </select>
         </div>
       </div>
-      <div class="column-group">
-        <div class="param-row">
-          <label for="symbol-select">Symbol:</label>
-          <select id="symbol-select"></select>
-        </div>
-      </div>
     </div>
     <div class="column-group-container">
       <div class="column-group" id="simulation-rules">
@@ -69,7 +63,13 @@
           <key-value-input id="system-input-consts"></key-value-input>
         </div>
       </div>
+    </div>
+    <div class="column-group-container">
       <div class="column-group" id="view-controls">
+        <div class="param-row">
+          <label for="symbol-select">Symbol:</label>
+          <select id="symbol-select"></select>
+        </div>
         <div class="param-row">
           <label for="style-input-draw">Draw:</label>
           <input type="checkbox" id="style-input-draw">
@@ -81,6 +81,16 @@
         <div class="param-row">
           <label for="style-input-color">Color:</label>
           <rgba-input id="style-input-color"></rgba-input>
+        </div>
+      </div>
+      <div class="column-group" id="general-controls">
+        <div class="param-row">
+          <label for="general-input-live">Live update:</label>
+          <input type="checkbox" id="general-input-live">
+        </div>
+        <div class="param-row">
+          <label for="general-input-background">Background color:</label>
+          <rgba-input id="general-input-background"></rgba-input>
         </div>
       </div>
     </div>

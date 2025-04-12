@@ -331,16 +331,27 @@ camera.zoom = 1.0;
 camera.updateProjection();
 camera.worldMatrix = math.identity(4);
 
+const backgroundColor = new Float32Array([0.0, 0.0, 0.0]);
+
 function render() {
+    gl.clearColor(...backgroundColor, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniformMatrix4fv(prog.uniforms["u_view"]["location"], false, camera.worldMatrix);
     gl.uniformMatrix4fv(prog.uniforms["u_proj"]["location"], false, camera.projectionMatrix);
 
     gl.drawArraysInstanced(gl.TRIANGLES, 0, nodes.length / 2, instances);
 }
 
-function updateLines(data, boundingBox) {
+/**
+ * @param {Float32Array} data
+ * @param {Float32Array} boundingBox
+ * @param {[number, number, number, number] | Float32Array} background
+ */
+function updateLines(data, boundingBox, background) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffers["points"]);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+
+    backgroundColor.set(background);
 
     instances = data.byteLength / BYTES_PER_LINE;
 
