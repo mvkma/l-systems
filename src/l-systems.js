@@ -283,12 +283,14 @@ function getLineSegmentBuffer3D(system) {
             tmpVec[1] = turtle3D.orientation[3];
             tmpVec[2] = turtle3D.orientation[6];
             cross(tmpVec, tropism, tmpMat);
-            const alpha = Math.sqrt(tmpMat[0] * tmpMat[0] +
-                                    tmpMat[1] * tmpMat[1] +
-                                    tmpMat[2] * tmpMat[2]);
-            // FIXME: this is wrong
-            matMul(turtle3D.orientation, rotationY(alpha), tmpMat);
-            turtle3D.orientation.set(tmpMat);
+            const sinTheta = Math.sqrt(tmpMat[0] * tmpMat[0] +
+                                       tmpMat[1] * tmpMat[1] +
+                                       tmpMat[2] * tmpMat[2]);
+            if (sinTheta !== 0) {
+                const theta = Math.asin(sinTheta);
+                matMul(turtle3D.orientation, rotationY(theta), tmpMat);
+                turtle3D.orientation.set(tmpMat);
+            }
             break;
         }
     };
