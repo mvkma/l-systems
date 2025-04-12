@@ -21,7 +21,7 @@ import {
     updateLinestyleSelect,
     updateSystemInput,
 } from "./ui.js";
-import { BYTES_PER_FLOAT, BYTES_PER_LINE, updateLines } from "./lines.js";
+import { updateLines } from "./lines.js";
 
 customElements.define("number-input", NumberInput, { extends: "input" });
 customElements.define("key-value-input", KeyValueInput);
@@ -38,25 +38,7 @@ const linestyles = {
         draw: true,
         width: 1.0,
         color: [1.0, 1.0, 0.0, 1.0],
-        shadowOffsetX: 0.0,
-        shadowOffsetY: 0.0,
-        shadowBlur: 0.0,
-        shadowColor: [0.0, 0.0, 0.0, 1.0],
     }
-}
-
-/**
- * 2D rotation matrix
- *
- * @param {number} angle - angle in radians
- *
- * @return {Object}
- */
-function rotationMatrix(angle) {
-    return [
-        [ Math.cos(angle), Math.sin(angle)],
-        [-Math.sin(angle), Math.cos(angle)],
-    ];
 }
 
 /**
@@ -304,130 +286,6 @@ function getLineSegmentBuffer3D(system) {
         boundingBox: boundingBox,
     };
 
-}
-
-/**
- * @param {Object} initialTurtle
- */
-function getLineSegmentBuffer(initialTurtle) {
-    const stack = [];
-
-    let turtle = new Float32Array([
-        initialTurtle["position"][0],
-        initialTurtle["position"][1],
-        initialTurtle["heading"][0],
-        initialTurtle["heading"][1],
-        1.0,
-    ]);
-
-    const rotPos = rotationMatrix(initialTurtle["angle"]);
-    const rotNeg = rotationMatrix(-initialTurtle["angle"]);
-
-    const numLines = state
-          .map(s => s.symbol)
-          .filter(k => k[0] >= "A" && k[0] <= "Z")
-          .length;
-
-    const boundingBox = new Float32Array([turtle[0], turtle[0], turtle[1], turtle[1]]);
-    const pointData = new Float32Array(numLines * BYTES_PER_LINE / BYTES_PER_FLOAT);
-    let pos = 0;
-
-    const updateBoundingBox = function(p) {
-        boundingBox[0] = Math.min(boundingBox[0], p[0]);
-        boundingBox[1] = Math.max(boundingBox[1], p[0]);
-        boundingBox[2] = Math.min(boundingBox[2], p[1]);
-        boundingBox[3] = Math.max(boundingBox[3], p[1]);
-    }
-
-    const addPoint = function(p) {
-        pointData[pos + 0] = p[0];
-        pointData[pos + 1] = p[1];
-        pos += 2;
-        updateBoundingBox(p);
-    }
-
-    const addColor = function(c) {
-        pointData[pos + 0] = c[0];
-        pointData[pos + 1] = c[1];
-        pointData[pos + 2] = c[2];
-        pointData[pos + 3] = c[3];
-        pos += 4;
-    }
-
-    const addWidth = function(w) {
-        pointData[pos] = w;
-        pos += 1;
-    }
-
-    const addSegment = function(p0, p1, color, width) {
-        addPoint(p0);
-        addPoint(p1);
-        addColor(color);
-        addWidth(width);
-    };
-
-    const tmp = new Float32Array([0, 0]);
-
-    /** @type {(symbol: import("./language.js").Symbol) => void} */
-    const drawingStep = function(symbol) {
-        const symb = symbol.symbol;
-        const step = (symbol.values["s"] || initialTurtle["step"]);
-
-        switch (symb) {
-        case "f":
-            turtle[0] = turtle[0] + step * turtle[2];
-            turtle[1] = turtle[1] + step * turtle[3];
-            break;
-        case "+":
-        case "-":
-            tmp[0] = turtle[2];
-            tmp[1] = turtle[3];
-            const angle = symbol.values["a"];
-            let rotation;
-
-            if (angle === undefined) {
-                rotation = symb === "+" ? rotPos : rotNeg;
-            } else {
-                rotation = symb === "+" ?
-                    rotationMatrix( angle * RAD_PER_DEG) :
-                    rotationMatrix(-angle * RAD_PER_DEG);
-            }
-
-            turtle[2] = tmp[0] * rotation[0][0] + tmp[1] * rotation[0][1];
-            turtle[3] = tmp[0] * rotation[1][0] + tmp[1] * rotation[1][1];
-            break;
-        case "[":
-            stack.push(turtle.slice());
-            break;
-        case "]":
-            turtle = stack.pop();
-            break;
-        case "!":
-            turtle[4] = symbol.values["w"] || 1.0;
-            break;
-        default:
-            const draw = (linestyles[symb] && linestyles[symb]["draw"]) || false;
-            if (!draw) {
-                break;
-            }
-            const style = linestyles[symb];
-            tmp[0] = turtle[0];
-            tmp[1] = turtle[1];
-            turtle[0] = turtle[0] + step * turtle[2];
-            turtle[1] = turtle[1] + step * turtle[3];
-            addSegment(tmp, turtle, style.color, style.width * turtle[4]);
-            break;
-        }
-    };
-
-    for (const symbol of state) {
-        drawingStep(symbol);
-    }
-
-    return {
-        pointData: pointData,
-        boundingBox: boundingBox,
-    };
 }
 
 /**

@@ -13,10 +13,6 @@ const styleControls = {
     draw: document.querySelector("#style-input-draw"),
     width: document.querySelector("#style-input-width"),
     color: document.querySelector("#style-input-color"),
-    shadowOffsetX: document.querySelector("#style-input-shadow-offset-x"),
-    shadowOffsetY: document.querySelector("#style-input-shadow-offset-y"),
-    shadowBlur: document.querySelector("#style-input-shadow-blur"),
-    shadowColor: document.querySelector("#style-input-shadow-color"),
 };
 
 /** @type {Object<string,any>} */
@@ -24,10 +20,6 @@ const defaultLineStyle = {
     draw: false,
     width: 1.0,
     color: [1.0, 0.0, 0.0, 1.0],
-    shadowOffsetX: 0.0,
-    shadowOffsetY: 0.0,
-    shadowBlur: 0.0,
-    shadowColor: [1.0, 0.0, 0.0, 1.0],
 };
 
 /**
@@ -40,10 +32,6 @@ function updateLinestyleInput(linestyles) {
     styleControls["draw"].checked = linestyle["draw"];
     styleControls["width"].setValue(linestyle["width"]);
     styleControls["color"].setRgba(linestyle["color"]);
-    styleControls["shadowOffsetX"].setValue(linestyle["shadowOffsetX"]);
-    styleControls["shadowOffsetY"].setValue(linestyle["shadowOffsetY"]);
-    styleControls["shadowBlur"].setValue(linestyle["shadowBlur"]);
-    styleControls["shadowColor"].setRgba(linestyle["shadowColor"]);
 }
 
 /**
@@ -75,10 +63,6 @@ function getLinestyleInput() {
         draw: styleControls["draw"].checked,
         width: styleControls["width"].getValue(),
         color: styleControls["color"].getRgba(),
-        shadowOffsetX: styleControls["shadowOffsetX"].getValue(),
-        shadowOffsetY: styleControls["shadowOffsetY"].getValue(),
-        shadowBlur: styleControls["shadowBlur"].getValue(),
-        shadowColor: styleControls["shadowColor"].getRgba(),
     };
 }
 
