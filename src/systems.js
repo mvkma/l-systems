@@ -12,7 +12,7 @@ const systems = [
         angle: 25,
         axiom: ["F"],
         tropism: [0, 0, 0],
-        level: 4,
+        level: 5,
         productions: {
             "F": "F[+F]F[-F]F",
         },
@@ -21,7 +21,7 @@ const systems = [
         angle: 25,
         axiom: ["X"],
         tropism: [0, 0, 0],
-        level: 6,
+        level: 8,
         productions: {
             "F": "FF",
             "X": "F[+X][-X]FX",
@@ -40,7 +40,7 @@ const systems = [
         angle: 90,
         axiom: ["-", "F"],
         tropism: [0, 0, 0],
-        level: 3,
+        level: 4,
         productions: {
             "F": "F+F-F-F+F",
         },
@@ -59,7 +59,7 @@ const systems = [
         angle: 90,
         axiom: ["F", "-", "F", "-", "F", "-", "F"],
         tropism: [0, 0, 0],
-        level: 3,
+        level: 4,
         productions: {
             "F": "FF-F+F-F-FF",
         }
@@ -115,7 +115,7 @@ const systems = [
         angle: 85,
         axiom: ["A(1.0)"],
         tropism: [0, 0, 0],
-        level: 5,
+        level: 8,
         productions: {
             "F(s)": "F(s)",
             "A(s)": "F(s)[+A(s/r)][-A(s/r)]",
@@ -127,7 +127,7 @@ const systems = [
     {
         angle: 45,
         axiom: ["!(1.0)", "F(200.0)", "<(45.0)", "A"],
-        tropism: [0, -1, 0],
+        tropism: [0, -0.1, 0],
         level: 6,
         productions: {
             "A": "!(f)F(50.0)[&(d)F(50.0)A]>(b)[&(d)F(50.0)A]>(c)[&(d)F(50.0)A]",

@@ -24,7 +24,7 @@ const generalControls = {
 const defaultLineStyle = {
     draw: false,
     width: 1.0,
-    color: [1.0, 0.0, 0.0, 1.0],
+    color: [0.75, 0.25, 0.25, 1.0],
 };
 
 /**
