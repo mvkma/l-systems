@@ -23,7 +23,7 @@ import {
     updateLinestyleSelect,
     updateSystemInput,
 } from "./ui.js";
-import { updateLines } from "./lines.js";
+import { screenshot, updateLines } from "./lines.js";
 
 customElements.define("number-input", NumberInput, { extends: "input" });
 customElements.define("key-value-input", KeyValueInput);
@@ -405,6 +405,16 @@ window.addEventListener("keydown", function(ev) {
         ev.preventDefault();
         render();
     }
+});
+
+document.querySelector("#button-render").addEventListener("click", function(ev) {
+    ev.preventDefault();
+    render();
+});
+
+document.querySelector("#button-screenshot").addEventListener("click", function(ev) {
+    ev.preventDefault();
+    screenshot();
 });
 
 render();

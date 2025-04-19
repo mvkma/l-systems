@@ -374,6 +374,22 @@ function updateLines(data, boundingBox, background) {
     render();
 }
 
+function screenshot() {
+    const filename = `l-systems-${(new Date()).toISOString()}.png`;
+    const link = document.createElement("a");
+    link.style.display = "none";
+    document.body.appendChild(link);
+
+    render();
+    gl.canvas.toBlob(function (blob) {
+        link.href = window.URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    })
+
+    document.body.removeChild(link);
+}
+
 initZoomControls(gl.canvas, camera, render);
 
 initDragControls(gl.canvas, camera, render);
@@ -382,6 +398,7 @@ export {
     BYTES_PER_FLOAT,
     BYTES_PER_LINE,
     updateLines,
+    screenshot,
 };
 
 

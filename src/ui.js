@@ -186,6 +186,8 @@ function connectUpdateHandler(callback) {
     styleControls["draw"].addEventListener("input", () => callback());
     styleControls["width"].addEventListener("input", () => callback());
     styleControls["color"].addEventListener("input", () => callback());
+
+    generalControls["background"].addEventListener("input", () => callback());
 }
 
 export {

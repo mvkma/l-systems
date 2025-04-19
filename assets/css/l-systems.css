@@ -44,6 +44,14 @@
     margin: 0em 0.2em;
 }
 
+.button-row > button:first-child {
+    margin: 0em 0.2em 0em 0em;
+}
+
+.button-row > button:last-child {
+    margin: 0em 0em 0em 0.2em;
+}
+
 input[type=""], select {
     text-align: right;
     width: 200px;
